@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { TripCard } from "../components/TripCard";
 import { Link } from "react-router-dom";
+import { 
+  MapPin, 
+  Calendar, 
+  Clock, 
+  CheckCircle2, 
+  Loader2, 
+  AlertCircle,
+  Plane
+} from "lucide-react";
 import styles from "./MyTripsPage.module.css";
 import axios from "axios";
 
@@ -99,13 +108,21 @@ export function MyTripsPage() {
   }
 
   if (loading) {
-    return <div className={styles.pageWrapper}>Cargando tus viajes...</div>;
+    return (
+      <div className={styles.pageWrapper}>
+        <div className={styles.loadingContainer}>
+          <Loader2 className={styles.loadingSpinner} size={40} />
+          <p className={styles.loadingText}>Cargando tus viajes...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
       <div className={styles.pageWrapper}>
         <div className={styles.errorContainer}>
+          <AlertCircle className={styles.errorIcon} size={48} />
           <div className={styles.error}>{error}</div>
           <Link to="/login" className={styles.loginBtn}>
             Volver a iniciar sesión
@@ -129,7 +146,10 @@ export function MyTripsPage() {
     <div className={styles.pageWrapper}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <p className={styles.title}>Mis Viajes</p>
+          <div className={styles.titleSection}>
+            <Plane className={styles.titleIcon} size={32} />
+            <h1 className={styles.title}>Mis Viajes</h1>
+          </div>
           <Link to="/newtrip" className={styles.newTripBtn}>
             Empezar un nuevo viaje
           </Link>
@@ -137,7 +157,11 @@ export function MyTripsPage() {
 
         {active.length > 0 && (
           <>
-            <h3 className={styles.sectionTitle}>En curso</h3>
+            <div className={styles.sectionHeader}>
+              <Clock className={styles.sectionIcon} size={20} />
+              <h3 className={styles.sectionTitle}>En curso</h3>
+              <span className={styles.sectionBadge}>{active.length}</span>
+            </div>
             <div className={styles.cardGrid}>
               {active.map((trip) => (
                 <TripCard
@@ -152,30 +176,57 @@ export function MyTripsPage() {
           </>
         )}
 
-        <h3 className={styles.sectionTitle}>Próximamente</h3>
+        <div className={styles.sectionHeader}>
+          <Calendar className={styles.sectionIcon} size={20} />
+          <h3 className={styles.sectionTitle}>Próximamente</h3>
+          <span className={styles.sectionBadge}>{upcoming.length}</span>
+        </div>
         <div className={styles.cardGrid}>
-          {upcoming.map((trip) => (
-            <TripCard
-              key={trip.id}
-              title={trip.title}
-              dates={`${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}`}
-              image={trip.image_url}
-              to={`/trips/${trip.id}`}
-            />
-          ))}
+          {upcoming.length > 0 ? (
+            upcoming.map((trip) => (
+              <TripCard
+                key={trip.id}
+                title={trip.title}
+                dates={`${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}`}
+                image={trip.image_url}
+                to={`/trips/${trip.id}`}
+              />
+            ))
+          ) : (
+            <div className={styles.emptyState}>
+              <MapPin className={styles.emptyIcon} size={48} />
+              <p className={styles.emptyText}>No tienes viajes próximos</p>
+              <p className={styles.emptySubtext}>¡Planifica tu próxima aventura!</p>
+              <Link to="/newtrip" className={styles.emptyAction}>
+                Crear nuevo viaje
+              </Link>
+            </div>
+          )}
         </div>
 
-        <h3 className={styles.sectionTitle}>Anteriormente</h3>
+        <div className={styles.sectionHeader}>
+          <CheckCircle2 className={styles.sectionIcon} size={20} />
+          <h3 className={styles.sectionTitle}>Anteriormente</h3>
+          <span className={styles.sectionBadge}>{past.length}</span>
+        </div>
         <div className={styles.cardGrid}>
-          {past.map((trip) => (
-            <TripCard
-              key={trip.id}
-              title={trip.title}
-              dates={`${formatDate(trip.start_date)} - ${formatDate( trip.end_date)}`}
-              image={trip.image_url}
-              to={`/trips/${trip.id}`}
-            />
-          ))}
+          {past.length > 0 ? (
+            past.map((trip) => (
+              <TripCard
+                key={trip.id}
+                title={trip.title}
+                dates={`${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}`}
+                image={trip.image_url}
+                to={`/trips/${trip.id}`}
+              />
+            ))
+          ) : (
+            <div className={styles.emptyState}>
+              <CheckCircle2 className={styles.emptyIcon} size={48} />
+              <p className={styles.emptyText}>Aún no has completado ningún viaje</p>
+              <p className={styles.emptySubtext}>Tus aventuras pasadas aparecerán aquí</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

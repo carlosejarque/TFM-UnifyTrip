@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import * as Tooltip from '@radix-ui/react-tooltip'
 import { 
   MapPin, 
   Users, 
@@ -19,7 +20,8 @@ export const HomePage = () => {
   const { isAuthenticated } = useAuth()
 
   return (
-    <div className={styles.homePage}>
+    <Tooltip.Provider>
+      <div className={styles.homePage}>
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
@@ -71,29 +73,59 @@ export const HomePage = () => {
           </div>
           
           <div className={styles.featuresGrid}>
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>
-                <Calendar size={24} />
-              </div>
-              <h3>Itinerarios colaborativos</h3>
-              <p>Crea y edita itinerarios en tiempo real con todos los participantes del viaje.</p>
-            </div>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className={styles.featureCard}>
+                  <div className={styles.featureIcon}>
+                    <Calendar size={24} />
+                  </div>
+                  <h3>Itinerarios colaborativos</h3>
+                  <p>Crea y edita itinerarios en tiempo real con todos los participantes del viaje.</p>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className={styles.tooltipContent} sideOffset={5}>
+                  Sincronización en tiempo real, notificaciones automáticas y edición colaborativa
+                  <Tooltip.Arrow className={styles.tooltipArrow} />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
 
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>
-                <DollarSign size={24} />
-              </div>
-              <h3>Gestión de gastos</h3>
-              <p>Registra gastos compartidos y calcula automáticamente quién debe a quién.</p>
-            </div>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className={styles.featureCard}>
+                  <div className={styles.featureIcon}>
+                    <DollarSign size={24} />
+                  </div>
+                  <h3>Gestión de gastos</h3>
+                  <p>Registra gastos compartidos y calcula automáticamente quién debe a quién.</p>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className={styles.tooltipContent} sideOffset={5}>
+                  Cálculos automáticos, múltiples monedas y reportes detallados
+                  <Tooltip.Arrow className={styles.tooltipArrow} />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
 
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>
-                <Vote size={24} />
-              </div>
-              <h3>Votaciones grupales</h3>
-              <p>Toma decisiones democráticas sobre destinos, actividades y planes del viaje.</p>
-            </div>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div className={styles.featureCard}>
+                  <div className={styles.featureIcon}>
+                    <Vote size={24} />
+                  </div>
+                  <h3>Votaciones grupales</h3>
+                  <p>Toma decisiones democráticas sobre destinos, actividades y planes del viaje.</p>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className={styles.tooltipContent} sideOffset={5}>
+                  Sistema de votación anónima, deadlines personalizables y resultados en tiempo real
+                  <Tooltip.Arrow className={styles.tooltipArrow} />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
 
             <div className={styles.featureCard}>
               <div className={styles.featureIcon}>
@@ -203,6 +235,7 @@ export const HomePage = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </Tooltip.Provider>
   )
 }
