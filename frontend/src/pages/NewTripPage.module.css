@@ -1,0 +1,149 @@
+.pageWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  background: var(--color-white);
+  padding-top: 1rem;
+}
+
+.formContainer {
+  padding: 1rem 1.5rem;
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+
+.stepper {
+  font-size: 1rem;
+  color: var(--color-secondary);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  font-size: 1rem;
+  gap: 0.5rem;
+}
+
+input {
+  padding: 0.65rem;
+  border-radius: 0.7rem;
+  border: 1.5px solid var(--color-primary);
+  font-size: 1rem;
+  font-family: var(--font-body);
+  outline: none;
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
+  transition: border-color 0.2s;
+}
+
+input:focus {
+  border-color: var(--color-secondary);
+}
+
+.stepButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.nextBtn, .backBtn {
+  padding: 0.65rem 1.4rem;
+  border-radius: 1rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.04rem;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nextBtn {
+  background: var(--color-primary);
+  color: var(--color-bg-light);
+}
+
+.nextBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.backBtn {
+  background: var(--color-secondary);
+  color: var(--color-bg-dark);
+}
+
+.summaryTitle {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.35rem;
+  margin-bottom: 1.3rem;
+  color: #0d151b;
+}
+
+.summaryBox {
+  display: flex;
+  gap: 2rem;
+  align-items: stretch;
+  background: none;
+  border-radius: 1.3rem;
+  margin-bottom: 2rem;
+}
+
+.summaryImg {
+  width: 250px;
+  min-width: 180px;
+  height: 165px;
+  object-fit: cover;
+  border-radius: 1.2rem;
+  background: #f1f5f9;
+  box-shadow: 0 1px 8px rgba(37,99,235,0.07);
+}
+
+.summaryInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #374151;
+}
+
+.summaryName {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.08rem;
+  color: #0d151b;
+  margin-bottom: 0.4rem;
+}
+
+.summaryDescription {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.summaryDates {
+  font-size: 0.97rem;
+  color: #4b5563;
+}

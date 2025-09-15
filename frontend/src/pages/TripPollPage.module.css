@@ -1,0 +1,319 @@
+.title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+.subtitle {
+  color: var(--color-text);
+  margin: 8px 0 16px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.primaryBtn {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.error{
+  padding: 18px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.noPolls {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text);
+  font-style: italic;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.pollCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 16px;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.06);
+}
+
+.pollTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.pollDescription {
+  color: var(--color-text);
+  margin: 0 0 16px 0;
+}
+
+.pollOptions {
+  display: grid;
+  gap: 12px;
+}
+
+.pollOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.pollOption:hover {
+  background: #f3f4f6;
+  cursor: pointer;
+}
+
+.optionLabel {
+  font-weight: 500;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Estilo especial para fechas */
+.optionLabel:has-text("- ") {
+  font-family: var(--font-body);
+}
+
+.dateRange {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.dateRange::before {
+  content: "📅";
+  font-size: 14px;
+}
+
+.voteCount {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Estilos del formulario */
+.formOverlay {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.formContainer {
+  background: var(--color-white);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.06);
+}
+
+.formContainer h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 24px 0;
+}
+
+.pollForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pollForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pollForm input[type="text"],
+.pollForm textarea,
+.pollForm select {
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--color-white);
+}
+
+.pollForm input[type="text"]:focus,
+.pollForm textarea:focus,
+.pollForm select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.pollForm textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.pollForm input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.secondaryBtn {
+  background: var(--color-bg-light);
+  color: var(--color-text);
+  border: 2px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+.primaryBtn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.primaryBtn:active {
+  transform: translateY(0);
+}
+
+.primaryBtn:disabled,
+.secondaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.primaryBtn:disabled:hover,
+.secondaryBtn:disabled:hover {
+  background: var(--color-primary);
+  box-shadow: none;
+  transform: none;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .formContainer {
+    padding: 24px;
+  }
+  
+  .formActions {
+    flex-direction: column-reverse;
+  }
+  
+  .formActions button {
+    width: 100%;
+  }
+}
+
+/* Estilos para las opciones de la encuesta */
+.optionsSection {
+  margin-top: 8px;
+}
+
+.optionsSection h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 16px 0;
+}
+
+.optionInput {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.optionInput input {
+  flex: 1;
+}
+
+.removeBtn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.removeBtn:hover {
+  background: #dc2626;
+}
+
+.addOptionBtn {
+  background: var(--color-secondary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 8px;
+}
+
+.addOptionBtn:hover {
+  background: #22c55e;
+}
+
+/* Estilos para inputs de fecha */
+.dateInputs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.dateInputs input[type="date"] {
+  flex: 1;
+  min-width: 120px;
+}

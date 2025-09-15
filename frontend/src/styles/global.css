@@ -1,0 +1,60 @@
+:root {
+  --color-primary: #2563EB;
+  --color-secondary: #4ADE80;
+  --color-text: #4B5563;
+  --color-white: #FFF;
+  --color-bg-light: #F3F3F3;
+  --color-bg-dark: #111827;
+
+  --font-heading: 'Poppins', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-bg-light);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--color-secondary);
+}
+
+button {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+}
+
+:root {
+  --color-primary: #2563EB;
+}
+.rdrCalendarWrapper {
+  font-family: var(--font-body);
+  background: #f8fafc;
+}
+.rdrDayNumber span {
+  color: #222;
+}
+.rdrDayToday .rdrDayNumber span {
+  border-bottom: 2px solid var(--color-primary);
+}
+.rdrSelected,
+.rdrInRange,
+.rdrStartEdge,
+.rdrEndEdge {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
