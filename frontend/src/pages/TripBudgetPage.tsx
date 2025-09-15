@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios"; // Descomentado para probar la API
+import axios from "axios";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
 import styles from "./TripBudgetPage.module.css";
@@ -60,10 +60,8 @@ export function TripBudgetPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estado para el gasto personal del usuario actual
   const [personalExpense, setPersonalExpense] = useState<number>(0);
 
-  // Form state for adding new expense
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
@@ -73,7 +71,6 @@ export function TripBudgetPage() {
     participants: [] as string[],
   });
 
-  // Form state for editing expense
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -84,7 +81,6 @@ export function TripBudgetPage() {
     participants: [] as string[],
   });
 
-  // State for delete confirmation dialog
   const [expenseToDelete, setExpenseToDelete] = useState<{
     id: number;
     name: string;
@@ -106,38 +102,20 @@ export function TripBudgetPage() {
       setError(null);
       const token = localStorage.getItem("token");
 
-      console.log("🚀 Iniciando fetch de participantes para trip ID:", id);
-      console.log("🔑 Token:", token ? "Presente" : "No encontrado");
-
-      // Fetch participants (llamada real)
       try {
         const participantsResponse = await axios.get(
           `http://localhost:3000/trip-participants/trip/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log(
-          "✅ Respuesta de participantes:",
-          participantsResponse.data
-        );
-
-        // Obtener información completa de cada usuario
         const participantsWithUserInfo: Participant[] = [];
 
         for (const participant of participantsResponse.data) {
           try {
-            console.log(
-              `🔍 Obteniendo información del usuario ${participant.user_id}`
-            );
 
             const userResponse = await axios.get(
               `http://localhost:3000/users/${participant.user_id}`,
               { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            console.log(
-              `✅ Información del usuario ${participant.user_id}:`,
-              userResponse.data
             );
 
             participantsWithUserInfo.push({
@@ -154,7 +132,6 @@ export function TripBudgetPage() {
               userError
             );
 
-            // Fallback si no se puede obtener la info del usuario
             participantsWithUserInfo.push({
               id: participant.user_id,
               username: `Usuario${participant.user_id}`,
@@ -163,35 +140,24 @@ export function TripBudgetPage() {
           }
         }
 
-        console.log(
-          "✅ Participantes con información completa:",
-          participantsWithUserInfo
-        );
         setParticipants(participantsWithUserInfo);
 
-        // Fetch expenses for this trip
         try {
-          console.log("🚀 Obteniendo gastos del viaje...");
 
           const expensesResponse = await axios.get(
             `http://localhost:3000/expenses/trip/${id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          console.log("✅ Gastos obtenidos:", expensesResponse.data);
 
-          // Verificar si la respuesta es un array (hay gastos) o un objeto con mensaje (no hay gastos)
           if (Array.isArray(expensesResponse.data)) {
-            // Procesar gastos para que coincidan con el tipo Expense esperado
             const processedExpenses = await Promise.all(
               expensesResponse.data.map(async (expense: any) => {
-                // Encontrar el username del usuario que pagó
                 const paidByUser = participantsWithUserInfo.find(
                   (p) => p.id === expense.paid_by
                 );
                 const paidByUsername =
                   paidByUser?.username || `Usuario${expense.paid_by}`;
 
-                // Obtener los participantes reales de este gasto desde expense-participants
                 let expenseParticipants: string[] = [];
                 try {
                   const participantsResponse = await axios.get(
@@ -199,42 +165,34 @@ export function TripBudgetPage() {
                     { headers: { Authorization: `Bearer ${token}` } }
                   );
                   
-                  // Convertir user_ids a usernames
                   expenseParticipants = participantsResponse.data.map((ep: any) => {
                     const participant = participantsWithUserInfo.find(p => p.id === ep.user_id);
                     return participant?.username || `Usuario${ep.user_id}`;
                   });
-                } catch (error) {
-                  console.warn(`⚠️ Error obteniendo participantes del gasto ${expense.id}, usando todos los participantes como fallback`);
+                } catch {
                   expenseParticipants = participantsWithUserInfo.map((p) => p.username);
                 }
 
                 return {
                   id: expense.id,
                   description: expense.description,
-                  amount: parseFloat(expense.amount), // Convertir string a número
-                  paid_by: paidByUsername, // Convertir ID a username
+                  amount: parseFloat(expense.amount),
+                  paid_by: paidByUsername,
                   category: expense.category,
                   date: expense.date,
                   trip_id: expense.trip_id,
-                  participants: expenseParticipants, // Participantes reales del gasto
+                  participants: expenseParticipants,
                 };
               })
             );
 
-            console.log("✅ Gastos procesados:", processedExpenses);
             setExpenses(processedExpenses);
           } else if (expensesResponse.data.message === "No expenses found") {
-            // El backend devuelve status 200 con mensaje cuando no hay gastos
-            console.log("ℹ️ No se encontraron gastos para este viaje");
             setExpenses([]);
           } else {
-            // Respuesta inesperada
-            console.warn("⚠️ Respuesta inesperada del servidor:", expensesResponse.data);
             setExpenses([]);
           }
         } catch (expensesError) {
-          console.error("❌ Error al obtener gastos:", expensesError);
           setExpenses([]);
 
           if (axios.isAxiosError(expensesError) && expensesError.response) {
@@ -245,16 +203,10 @@ export function TripBudgetPage() {
           toast.error("❌ Error al cargar los gastos del viaje");
         }
 
-        // Obtener gasto personal del usuario actual
         try {
           const personalExpenseResponse = await axios.get(
             `http://localhost:3000/expense-participants/personal`,
             { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          console.log(
-            "✅ Gasto personal obtenido:",
-            personalExpenseResponse.data
           );
 
           const totalPersonalExpense = personalExpenseResponse.data.reduce(
@@ -264,33 +216,22 @@ export function TripBudgetPage() {
           );
 
           setPersonalExpense(totalPersonalExpense);
-          console.log(
-            `💰 Gasto personal total: €${totalPersonalExpense.toFixed(2)}`
-          );
         } catch (personalExpenseError) {
-          console.error(
-            "❌ Error al obtener gasto personal:",
-            personalExpenseError
-          );
           setPersonalExpense(0);
         }
 
-        // Marcar como cargado después de procesar todos los datos
         setLoading(false);
       } catch (participantsError) {
-        console.error("❌ Error al obtener participantes:", participantsError);
 
-        setExpenses([]); // No expenses si no hay participantes reales
-        setLoading(false); // También marcar como cargado en caso de error
+        setExpenses([]);
+        setLoading(false);
       }
     } catch (err) {
       setError("No se pudieron cargar los datos.");
-      console.error("❌ Error general:", err);
       setLoading(false);
     }
   }, [id]);
 
-  // Funciones auxiliares para reducir repetición
   const resetFormData = () => {
     setFormData({
       description: "",
@@ -312,7 +253,6 @@ export function TripBudgetPage() {
   };
 
   const handleApiError = (error: any, action: string) => {
-    console.error(`❌ Error ${action}:`, error);
     if (axios.isAxiosError(error) && error.response) {
       console.error("📄 Response data:", error.response.data);
       console.error("📊 Response status:", error.response.status);
@@ -364,10 +304,9 @@ export function TripBudgetPage() {
     try {
       const expenseData = processExpenseData(formData);
 
-      // Añadir a estado local para demostración
       const newExpense: Expense = {
         ...expenseData,
-        id: Date.now(), // Temporary ID
+        id: Date.now(),
       };
 
       setExpenses((prev) => [...prev, newExpense]);
@@ -376,7 +315,6 @@ export function TripBudgetPage() {
 
       toast.success(`💰 Gasto "${formData.description}" añadido correctamente`);
 
-      // Llamada a la API con el user_id como número
       const token = localStorage.getItem("token");
       const savedExpenseResponse = await axios.post(
         `http://localhost:3000/expenses/`,
@@ -384,52 +322,35 @@ export function TripBudgetPage() {
           trip_id: parseInt(id!),
           description: formData.description,
           amount: parseFloat(formData.amount),
-          paid_by: formData.paid_by, // Enviamos el user_id como número
+          paid_by: formData.paid_by,
           category: formData.category,
           date: new Date().toISOString(),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("✅ Gasto guardado:", savedExpenseResponse.data);
-
-      // Obtener el ID del gasto creado desde la estructura de respuesta correcta
       const expenseId =
         savedExpenseResponse.data.expense?.id || savedExpenseResponse.data.id;
 
       if (!expenseId) {
-        console.error("❌ No se pudo obtener el ID del gasto creado");
-        console.error("📄 Estructura de respuesta:", savedExpenseResponse.data);
         toast.error("❌ Error: No se pudo obtener el ID del gasto");
         return;
       }
 
-      console.log(`🔍 ID del gasto obtenido: ${expenseId}`);
-
-      // Guardar la relación de participantes con el gasto
       const shareAmount =
         parseFloat(formData.amount) / formData.participants.length;
 
-      // Crear una llamada para cada participante seleccionado
       const participantPromises = formData.participants.map(
         async (participantUsername) => {
-          // Encontrar el user_id del participante
           const participant = participants.find(
             (p) => p.username === participantUsername
           );
 
           if (!participant) {
-            console.error(
-              `❌ No se encontró el participante: ${participantUsername}`
-            );
             return;
           }
 
           try {
-            console.log(
-              `💰 Guardando participante ${participantUsername} (ID: ${participant.id}) en gasto ${expenseId}`
-            );
-
             await axios.post(
               `http://localhost:3000/expense-participants/`,
               {
@@ -439,24 +360,14 @@ export function TripBudgetPage() {
               },
               { headers: { Authorization: `Bearer ${token}` } }
             );
-
-            console.log(
-              `✅ Participante ${participantUsername} guardado correctamente`
-            );
           } catch (participantError) {
-            console.error(
-              `❌ Error al guardar participante ${participantUsername}:`,
-              participantError
-            );
             throw participantError;
           }
         }
       );
 
-      // Esperar a que se guarden todos los participantes
       await Promise.all(participantPromises);
-      console.log("✅ Todos los participantes guardados correctamente");
-      fetchData(); // Refresh data from server
+      fetchData();
     } catch (err) {
       handleApiError(err, "al añadir el gasto");
     }
@@ -476,38 +387,24 @@ export function TripBudgetPage() {
     if (!expenseToDelete) return;
 
     try {
-      // Eliminar del estado local para demostración
       setExpenses((prev) => prev.filter((e) => e.id !== expenseToDelete.id));
 
       const token = localStorage.getItem("token");
 
-      // Primero eliminar todos los registros de expense-participants relacionados
       try {
-        console.log(
-          `🗑️ Eliminando participantes del gasto ${expenseToDelete.id}...`
-        );
         await axios.delete(
           `http://localhost:3000/expense-participants/expense/${expenseToDelete.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("✅ Participantes del gasto eliminados correctamente");
-      } catch (participantsError) {
-        console.error(
-          "❌ Error al eliminar participantes del gasto:",
-          participantsError
-        );
-        // Continuamos con la eliminación del gasto aunque falle esto
-      }
-
-      // Luego eliminar el gasto principal
-      await axios.delete(
+        } catch {
+          // Continue with expense deletion even if this fails
+        }      await axios.delete(
         `http://localhost:3000/expenses/${expenseToDelete.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       toast.success(`"${expenseToDelete.name}" eliminado correctamente`);
 
-      console.log("✅ Gasto eliminado completamente");
       fetchData();
     } catch (err) {
       handleApiError(err, "al eliminar el gasto");
@@ -529,9 +426,7 @@ export function TripBudgetPage() {
     }));
   };
 
-  // Funciones para editar gastos
   const handleEditExpense = (expense: Expense) => {
-    // Encontrar el user_id del usuario que pagó
     const paidByUser = participants.find((p) => p.username === expense.paid_by);
 
     setEditingExpense(expense);

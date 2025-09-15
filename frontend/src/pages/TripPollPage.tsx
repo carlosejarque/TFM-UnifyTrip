@@ -48,7 +48,6 @@ export function TripPollPage() {
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Función para formatear fechas de manera más visual
   const formatDateRange = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -62,14 +61,12 @@ export function TripPollPage() {
     const startFormatted = start.toLocaleDateString('es-ES', formatOptions);
     const endFormatted = end.toLocaleDateString('es-ES', formatOptions);
     
-    // Si es el mismo año, no repetir el año en la fecha de inicio
     if (start.getFullYear() === end.getFullYear()) {
       const startSameYear = start.toLocaleDateString('es-ES', {
         day: 'numeric',
         month: 'short'
       });
       
-      // Si es el mismo mes y año, mostrar solo el rango de días
       if (start.getMonth() === end.getMonth()) {
         const monthYear = end.toLocaleDateString('es-ES', {
           month: 'short',
@@ -84,7 +81,6 @@ export function TripPollPage() {
     return `📅 ${startFormatted} - ${endFormatted}`;
   };
   
-  // Estados para el formulario de nueva encuesta
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -96,7 +92,6 @@ export function TripPollPage() {
     { type: 'text', text: '' }
   ]);
 
-  // Función para agregar una nueva opción
   const addOption = () => {
     if (formData.type === 'date') {
       setNewOptions([...newOptions, { type: 'date-range', startDate: '', endDate: '' }]);
@@ -105,21 +100,18 @@ export function TripPollPage() {
     }
   };
 
-  // Función para eliminar una opción
   const removeOption = (index: number) => {
     if (newOptions.length > 2) {
       setNewOptions(newOptions.filter((_, i) => i !== index));
     }
   };
 
-  // Función para actualizar una opción de texto
   const updateTextOption = (index: number, value: string) => {
     const updated = [...newOptions];
     updated[index] = { ...updated[index], text: value };
     setNewOptions(updated);
   };
 
-  // Función para actualizar una opción de fecha
   const updateDateOption = (index: number, field: 'start' | 'end', value: string) => {
     const updated = [...newOptions];
     if (field === 'start') {
@@ -130,11 +122,9 @@ export function TripPollPage() {
     setNewOptions(updated);
   };
 
-  // Función para manejar el cambio de tipo de encuesta
   const handleTypeChange = (newType: PollType) => {
     setFormData({...formData, type: newType});
     
-    // Resetear opciones según el tipo
     if (newType === 'date') {
       setNewOptions([
         { type: 'date-range', startDate: '', endDate: '' },
@@ -148,7 +138,6 @@ export function TripPollPage() {
     }
   };
 
-  // Función para resetear el formulario
   const resetForm = () => {
     setFormData({
       title: '',
@@ -171,7 +160,6 @@ export function TripPollPage() {
       setError(null);
 
       try {
-        // 1. Obtener encuestas del viaje
         let pollsData: Poll[] = [];
         try {
           const pollsRes = await axios.get<Poll[]>(
@@ -180,10 +168,9 @@ export function TripPollPage() {
           pollsData = pollsRes.data ?? [];
         } catch (pollsError) {
           if (axios.isAxiosError(pollsError) && pollsError.response?.status === 404) {
-            // No hay encuestas para este viaje, es normal
             pollsData = [];
           } else {
-            throw pollsError; // Re-lanzar otros errores
+            throw pollsError;
           }
         }
         
@@ -197,7 +184,6 @@ export function TripPollPage() {
           return;
         }
 
-        // 2. Crear arrays de promesas
         const optionsPromises = pollsData.map((poll) =>
           axios.get<PollOption[]>(
             `http://localhost:3000/poll-options/poll/${poll.id}`
@@ -235,7 +221,6 @@ export function TripPollPage() {
       } catch (err) {
         if (!cancelled) {
           setError("No se pudieron cargar las encuestas.");
-          console.error("Error fetching polls/options/votes:", err);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -279,18 +264,15 @@ export function TripPollPage() {
 
       toast.success("Voto registrado con éxito");
     } catch (e) {
-      console.error("Error voting:", e);
       toast.error("No se pudo registrar el voto. Inténtalo de nuevo.");
     }
   }
 
-  // Función para crear la encuesta en la base de datos
   const createPoll = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      // Validaciones
       let validOptions;
       if (formData.type === 'date') {
         validOptions = newOptions.filter(opt => 
@@ -308,7 +290,6 @@ export function TripPollPage() {
         }
       }
 
-      // 1. Crear la encuesta principal
       const pollResponse = await axios.post('http://localhost:3000/polls', {
         trip_id: parseInt(tripId!),
         title: formData.title,
@@ -322,8 +303,7 @@ export function TripPollPage() {
       });
 
       const newPoll = pollResponse.data;
-      // 2. Crear las opciones de la encuesta
-      const pollId = newPoll.poll?.id || newPoll.id; // Acceder al ID dentro del objeto poll
+      const pollId = newPoll.poll?.id || newPoll.id;
       
       const optionPromises = validOptions.map(option => {
         const optionData = formData.type === 'date' ? {
@@ -347,16 +327,13 @@ export function TripPollPage() {
 
       await Promise.all(optionPromises);
 
-      // 3. Actualizar el estado local
-      const pollToAdd = newPoll.poll || newPoll; // Usar el objeto poll real
+      const pollToAdd = newPoll.poll || newPoll;
       setPolls(prev => [...prev, pollToAdd]);
       
-      // 4. Resetear formulario y mostrar mensaje
       resetForm();
       toast.success('Encuesta creada exitosamente');
       
     } catch (error) {
-      console.error('Error creating poll:', error);
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message || 'Error al crear la encuesta';
         toast.error(message);
@@ -370,7 +347,6 @@ export function TripPollPage() {
 
   if (loading) return <div>Cargando...</div>;
 
-  // Si showForm es true, solo mostrar el formulario
   if (showForm) {
     return (
       <div className={styles.formOverlay}>

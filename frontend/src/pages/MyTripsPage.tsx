@@ -49,17 +49,13 @@ export function MyTripsPage() {
         setError(null);
         const token = localStorage.getItem("token");
         
-        // Primera llamada: obtener los IDs de los viajes del usuario
         const participantsResponse = await axios.get("http://localhost:3000/trip-participants/my", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log("Fetched trip IDs:", participantsResponse.data);
         
-        // Segunda llamada: obtener los detalles de cada viaje
-        const tripIds = participantsResponse.data.tripIds; // Acceder a la propiedad tripIds
-        console.log("Extracted trip IDs array:", tripIds);
+        const tripIds = participantsResponse.data.tripIds;
         
         if (Array.isArray(tripIds) && tripIds.length > 0) {
           const tripDetailsPromises = tripIds.map(tripId => 
@@ -72,10 +68,8 @@ export function MyTripsPage() {
           
           const tripDetailsResponses = await Promise.all(tripDetailsPromises);
           const tripsData = tripDetailsResponses.map(response => response.data);
-          console.log("Fetched trip details:", tripsData);
           setTrips(tripsData);
         } else {
-          console.log("No trips found or tripIds is not an array");
           setTrips([]);
         }
       } catch (err) {

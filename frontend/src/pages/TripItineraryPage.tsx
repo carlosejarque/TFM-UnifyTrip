@@ -50,31 +50,26 @@ export function TripItineraryPage() {
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Helper function to get min/max dates for datetime-local inputs
   const getDateLimits = () => {
     if (!trip?.start_date || !trip?.end_date) {
       return { min: "", max: "" };
     }
 
-    // Convert YYYY-MM-DD to YYYY-MM-DDTHH:MM format for datetime-local
     const startDate = new Date(trip.start_date);
     const endDate = new Date(trip.end_date);
 
-    // Set start of day for minimum date
     const minDateTime = new Date(startDate);
     minDateTime.setHours(0, 0, 0, 0);
 
-    // Set end of day for maximum date
     const maxDateTime = new Date(endDate);
     maxDateTime.setHours(23, 59, 59, 999);
 
     return {
-      min: minDateTime.toISOString().slice(0, 16), // Format: YYYY-MM-DDTHH:MM
+      min: minDateTime.toISOString().slice(0, 16),
       max: maxDateTime.toISOString().slice(0, 16),
     };
   };
 
-  // Estados para el formulario de nueva actividad
   const [activityFormData, setActivityFormData] = useState({
     name: "",
     description: "",
@@ -93,7 +88,6 @@ export function TripItineraryPage() {
         setError(null);
         const token = localStorage.getItem("token");
 
-        // 1. Cargar información del trip
         const tripResponse = await axios.get(
           `http://localhost:3000/trips/${tripId}`,
           {
@@ -103,7 +97,6 @@ export function TripItineraryPage() {
         const tripData = tripResponse.data;
         setTrip(tripData);
 
-        // 2. Verificar si el trip tiene fechas definidas
         if (!tripData.start_date || !tripData.end_date) {
           setError(
             "Define las fechas del viaje primero para ver el itinerario. Ve a la página de detalles del viaje."
@@ -112,7 +105,6 @@ export function TripItineraryPage() {
           return;
         }
 
-        // 3. Cargar itinerario (debe existir ya que se crea con el trip)
         const itineraryResponse = await axios.get(
           `http://localhost:3000/itineraries/trip/${tripId}`,
           {
@@ -124,7 +116,6 @@ export function TripItineraryPage() {
           : itineraryResponse.data;
         setItinerary(itineraryData);
 
-        // 4. Cargar actividades
         try {
           const activitiesResponse = await axios.get(
             `http://localhost:3000/activities/itinerary/${itineraryData.id}`,
@@ -150,7 +141,6 @@ export function TripItineraryPage() {
     loadItineraryData();
   }, [tripId]);
 
-  // Funciones auxiliares para formatear fechas
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("es-ES", {
@@ -168,11 +158,9 @@ export function TripItineraryPage() {
     });
   };
 
-  // Agrupar actividades por día
   const groupActivitiesByDay = () => {
     const grouped: { [key: string]: Activity[] } = {};
 
-    // Verificar que activities sea un array válido
     if (!Array.isArray(activities)) {
       return grouped;
     }
@@ -185,7 +173,6 @@ export function TripItineraryPage() {
       grouped[date].push(activity);
     });
 
-    // Ordenar actividades dentro de cada día por hora de inicio
     Object.keys(grouped).forEach((date) => {
       grouped[date].sort(
         (a, b) =>
@@ -198,7 +185,6 @@ export function TripItineraryPage() {
 
   const activitiesByDay = groupActivitiesByDay();
 
-  // Función para resetear el formulario
   const resetActivityForm = () => {
     setActivityFormData({
       name: "",
@@ -212,7 +198,6 @@ export function TripItineraryPage() {
   };
 
   const handleCreateActivity = () => {
-    // Establecer el itinerary_id cuando se abre el formulario
     if (itinerary?.id) {
       setActivityFormData((prev) => ({
         ...prev,
@@ -222,21 +207,18 @@ export function TripItineraryPage() {
     setShowActivityForm(true);
   };
 
-  // Función para crear la actividad
   const createActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tripId) return;
 
     setIsSubmitting(true);
     try {
-      // Validar que las fechas estén dentro del rango del viaje
       if (trip?.start_date && trip?.end_date) {
         const startDate = new Date(activityFormData.start_datetime);
         const endDate = new Date(activityFormData.end_datetime);
         const tripStart = new Date(trip.start_date);
         const tripEnd = new Date(trip.end_date);
 
-        // Ajustar las fechas del viaje para comparación
         tripStart.setHours(0, 0, 0, 0);
         tripEnd.setHours(23, 59, 59, 999);
 
@@ -267,14 +249,12 @@ export function TripItineraryPage() {
 
       const token = localStorage.getItem("token");
 
-      // Verificar que tenemos un itinerario
       if (!itinerary) {
         toast.error("No se puede crear la actividad sin un itinerario válido");
         setIsSubmitting(false);
         return;
       }
 
-      // Procesar las fechas - convertir el datetime-local a formato ISO
       const startDate = activityFormData.start_datetime
         ? new Date(activityFormData.start_datetime).toISOString()
         : null;
@@ -282,9 +262,6 @@ export function TripItineraryPage() {
         ? new Date(activityFormData.end_datetime).toISOString()
         : null;
 
-      console.log("Enviando fechas al backend:", { startDate, endDate });
-
-      // Crear la actividad
       const response = await axios.post(
         `http://localhost:3000/activities`,
         {
@@ -301,11 +278,9 @@ export function TripItineraryPage() {
         }
       );
 
-      // Extraer la actividad del response y actualizar el estado
       const newActivity = response.data.activity || response.data;
       setActivities((prev) => [...prev, newActivity]);
 
-      // Resetear formulario y mostrar mensaje
       resetActivityForm();
       toast.success("Actividad creada exitosamente");
     } catch (error) {
@@ -322,7 +297,6 @@ export function TripItineraryPage() {
     }
   };
 
-  // Función para eliminar actividad
   const deleteActivity = async (activityId: number) => {
     try {
       const token = localStorage.getItem("token");
@@ -331,7 +305,6 @@ export function TripItineraryPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Actualizar el estado local removiendo la actividad
       setActivities((prev) =>
         prev.filter((activity) => activity.id !== activityId)
       );
@@ -348,7 +321,6 @@ export function TripItineraryPage() {
       return;
     }
 
-    // Función que llama al backend para generar el itinerario con IA
     const generateItineraryPromise = async (): Promise<{ activitiesCount: number }> => {
       try {
         const token = localStorage.getItem("token");
@@ -357,7 +329,6 @@ export function TripItineraryPage() {
           throw new Error("No hay token de autenticación");
         }
 
-        // Llamada al backend para generar itinerario con IA
         const response = await axios.post(
           `http://localhost:3000/itineraries/${itinerary.id}/generate-ai`,
           {
@@ -372,14 +343,12 @@ export function TripItineraryPage() {
           }
         );
 
-        // El backend devuelve las actividades ya creadas
         const newActivities = response.data.activities || [];
         
         if (!Array.isArray(newActivities)) {
           throw new Error("Respuesta inválida del servidor");
         }
 
-        // Actualizar el estado con las nuevas actividades
         setActivities((prev) => [...prev, ...newActivities]);
 
         return { activitiesCount: newActivities.length };
@@ -393,15 +362,12 @@ export function TripItineraryPage() {
       }
     };
 
-    // Usar toast.promise para manejar los estados automáticamente
     toast.promise(generateItineraryPromise(), {
       loading: "Generando itinerario con IA...",
       success: (data) => {
-        console.log("✅ Itinerario generado con IA exitosamente");
         return `🎉 ¡Itinerario generado! Se crearon ${data.activitiesCount} actividades`;
       },
       error: (err) => {
-        console.error("❌ Error generando itinerario con IA:", err);
         return `❌ Error al generar el itinerario: ${err.message}`;
       },
     });
@@ -410,10 +376,8 @@ export function TripItineraryPage() {
   if (loading)
     return <div className={styles.loading}>Cargando itinerario...</div>;
 
-  // Verificar si el viaje tiene fechas definidas
   const hasValidDates = trip?.start_date && trip?.end_date;
 
-  // Si showActivityForm es true, mostrar el formulario
   if (showActivityForm) {
     return (
       <div className={styles.formOverlay}>

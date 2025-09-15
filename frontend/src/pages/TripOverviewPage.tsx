@@ -44,7 +44,6 @@ export function TripOverviewPage() {
   if (loading) return <div className={styles.loading}>Cargando viaje...</div>;
   if (error || !trip) return <div className={styles.error}>{error || "No se encontró el viaje."}</div>;
 
-  // Flags para mostrar aviso y botones
   const faltaDestino = !trip.destination;
   const faltaFechas = !trip.start_date || !trip.end_date;
 
