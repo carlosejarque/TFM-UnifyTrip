@@ -5,6 +5,14 @@
   --color-white: #FFF;
   --color-bg-light: #F3F3F3;
   --color-bg-dark: #111827;
+  
+  /* Additional colors for HomePage */
+  --color-primary-dark: #1e40af;
+  --color-secondary-dark: #22c55e;
+  --color-secondary-light: #22d3ee;
+  --color-gray-100: #f8fafc;
+  --color-gray-200: #e5e7eb;
+  --color-gray-800: #1f2937;
 
   --font-heading: 'Poppins', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
