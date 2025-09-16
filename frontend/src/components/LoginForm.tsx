@@ -28,8 +28,7 @@ export const LoginForm = () => {
         password: data.password,
       });
 
-      alert("Usuario registrado correctamente");
-      login(response.data.token, response.data.refreshToken);
+      await login(response.data.token, response.data.refreshToken);
       navigate("/mytrips");
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;

@@ -13,6 +13,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import styles from "./TripOverviewPage.module.css";
+import { InviteModal } from "../components/InviteModal";
+import { InvitationsList } from "../components/InvitationsList";
 
 type Trip = {
   id: number;
@@ -48,6 +50,10 @@ export function TripOverviewPage() {
   const [newEndDate, setNewEndDate] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [isShowingParticipants, setIsShowingParticipants] = useState(false);
+  
+  // Estados para invitaciones
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showInvitationsList, setShowInvitationsList] = useState(false);
 
   // Función para formatear fechas a DD/MM/YYYY
   const formatDate = (dateString: string): string => {
@@ -521,12 +527,43 @@ export function TripOverviewPage() {
                 </div>
               ))}
             </div>
-            <button className={styles.addParticipantBtn}>
-              <UserPlus size={18} />
-              Invitar participante
-            </button>
+            <div className={styles.participantActions}>
+              <button 
+                className={styles.addParticipantBtn}
+                onClick={() => {
+                  setShowInviteModal(true);
+                  setIsShowingParticipants(false);
+                }}
+              >
+                <UserPlus size={18} />
+                Invitar participante
+              </button>
+              <button 
+                className={styles.viewInvitationsBtn}
+                onClick={() => setShowInvitationsList(!showInvitationsList)}
+              >
+                Ver invitaciones
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Componentes de invitaciones */}
+      <InviteModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        tripId={trip?.id || 0}
+        tripTitle={trip?.title || ""}
+      />
+
+      {showInvitationsList && trip && (
+        <InvitationsList
+          tripId={trip.id}
+          onInvitationRevoked={() => {
+            // Opcional: recargar participantes si es necesario
+          }}
+        />
       )}
     </section>
   );

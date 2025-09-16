@@ -892,7 +892,7 @@
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.3s ease;
-  width: 100%;
+  flex: 1;
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
@@ -901,6 +901,31 @@
   color: var(--color-bg-dark);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(74, 222, 128, 0.4);
+}
+
+.participantActions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.viewInvitationsBtn {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  font-weight: 600;
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 0.7;
+}
+
+.viewInvitationsBtn:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
+  transform: translateY(-2px);
 }
 
 /* Section Styles */

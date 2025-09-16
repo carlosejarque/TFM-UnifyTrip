@@ -60,25 +60,114 @@
   color: var(--color-bg-light);
 }
 
-.logoutBtn {
-  background: transparent;
-  color: var(--color-bg-dark);
-  border: 2px solid var(--color-secondary);
-  padding: 0.5rem;
-  border-radius: 0.5rem;
+/* Avatar Styles */
+.avatarButton {
+  background: none;
+  border: none;
   cursor: pointer;
+  margin-left: 1rem;
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 0.2s ease;
+}
+
+.avatarButton:hover {
+  transform: scale(1.05);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  overflow: hidden;
+  user-select: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-secondary);
+}
+
+.avatarFallback {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 1rem;
-  transition: all 0.2s;
-  outline: none;
+  background-color: var(--color-secondary);
+  color: var(--color-bg-dark);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-body);
 }
 
-.logoutBtn:hover {
-  background: var(--color-secondary);
-  color: var(--color-bg-light);
-  transform: scale(1.05);
+/* Dropdown Menu Styles */
+.dropdownContent {
+  min-width: 200px;
+  background: var(--color-bg-light);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border, #e5e7eb);
+  z-index: 50;
+  animation: slideDownAndFade 150ms ease-out;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--color-bg-dark);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  outline: none;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdownItem:hover {
+  background-color: var(--color-bg-alt, #f3f4f6);
+}
+
+.dropdownItem:focus {
+  background-color: var(--color-bg-alt, #f3f4f6);
+}
+
+.dropdownItem.danger {
+  color: var(--color-danger, #ef4444);
+}
+
+.dropdownItem.danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger-dark, #dc2626);
+}
+
+.dropdownItem.danger:focus {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger-dark, #dc2626);
+}
+
+.dropdownSeparator {
+  height: 1px;
+  background: var(--color-border, #e5e7eb);
+  margin: 4px 0;
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Dialog Styles */
