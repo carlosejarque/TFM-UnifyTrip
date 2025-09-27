@@ -43,6 +43,7 @@ exports.createTrip = async (req, res) => {
 
 exports.updateTrip = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.userId;
   const { title, description, destination, start_date, end_date, image_url } =
     req.body;
   const trip = await Trip.findByPk(id);

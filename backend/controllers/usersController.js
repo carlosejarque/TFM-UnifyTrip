@@ -15,6 +15,16 @@ exports.getUserById = async (req, res) => {
     }   
 };
 
+exports.getProfile = async (req, res) => {
+  const userId = req.user.userId;
+  const user = await User.findByPk(userId);
+    if (user) {
+        res.status(200).json(user);
+    } else {
+        res.status(404).json({ message: "User not found" });
+    }
+};
+
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
   const user = await User.findByPk(id);
