@@ -11,10 +11,12 @@ import {
   X,
   Check,
   UserPlus,
+  Sparkles,
 } from "lucide-react";
 import styles from "./TripOverviewPage.module.css";
 import { InviteModal } from "../components/InviteModal";
 import { InvitationsList } from "../components/InvitationsList";
+import { AIPreferencesModal } from "../components/AIDestinationForm";
 
 type Trip = {
   id: number;
@@ -32,6 +34,20 @@ type Participant = {
   username: string;
   email: string;
   avatar?: string;
+};
+
+type AIDestination = {
+  name: string;
+  description: string;
+  whyRecommended: string;
+  recommendedActivities: string[];
+  estimatedCostRange: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+  climateConditions: string;
+  seasonalAdvantages: string;
 };
 
 export function TripOverviewPage() {
@@ -54,6 +70,12 @@ export function TripOverviewPage() {
   // Estados para invitaciones
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showInvitationsList, setShowInvitationsList] = useState(false);
+
+  // Estados para recomendaciones de IA
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [recommendations, setRecommendations] = useState<AIDestination[]>([]);
+  const [showAIModal, setShowAIModal] = useState(false);
 
   // Función para formatear fechas a DD/MM/YYYY
   const formatDate = (dateString: string): string => {
@@ -118,13 +140,68 @@ export function TripOverviewPage() {
     fetchTrip();
   }, [id]);
 
+  // Función para obtener recomendaciones de IA
+  const getDestinationRecommendations = async () => {
+    setShowAIModal(true);
+  };
+
+  // Función para manejar las preferencias de IA
+  const handleAIPreferences = async (preferences: {
+    startDate: string;
+    endDate: string;
+    climate: string[];
+    experience: string[];
+    distance: string;
+    minBudget: string;
+    maxBudget: string;
+    travelStyle: string;
+    numberOfTravelers: number;
+    interests: string[];
+    additionalInfo: string;
+  }) => {
+    console.log("Preferencias de IA:", preferences);
+    setIsLoadingRecommendations(true);
+    setShowAIModal(false);
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        'http://localhost:3000/AI/recommend-destinations',
+        preferences,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      // El backend devuelve destinos en formato JSON
+      console.log("Respuesta completa de ChatGPT:", response.data);
+      
+      if (response.data.success && response.data.data.destinations) {
+        console.log("Destinos recomendados:", response.data.data.destinations);
+        setRecommendations(response.data.data.destinations);
+      } else {
+        console.log("No se encontraron destinos en la respuesta");
+        setRecommendations([]);
+      }
+      setShowRecommendations(true);
+    } catch (error) {
+      console.error("Error obteniendo recomendaciones de IA:", error);
+      // En caso de error, no mostrar recomendaciones
+      console.error("Error detallado:", axios.isAxiosError(error) ? error.response?.data : error);
+      setRecommendations([]);
+      setShowRecommendations(true);
+    } finally {
+      setIsLoadingRecommendations(false);
+    }
+  };
+
   // Funciones para edición
   const handleSaveDestination = async () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
         `http://localhost:3000/trips/${id}`,
-        { destination: newDestination },
+        { title: trip?.title , destination: newDestination },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTrip((prev) =>
@@ -326,13 +403,27 @@ export function TripOverviewPage() {
             <MapPin size={20} />
             Destino
           </h3>
-          <button
-            onClick={() => setIsEditingDestination(true)}
-            className={styles.editSectionBtn}
-            title="Editar destino"
-          >
-            <Edit3 size={16} />
-          </button>
+          <div className={styles.sectionActions}>
+            <button
+              onClick={getDestinationRecommendations}
+              className={styles.aiHeaderBtn}
+              disabled={isLoadingRecommendations}
+              title="Obtener recomendaciones de destino con IA"
+            >
+              {isLoadingRecommendations ? (
+                <Loader2 size={16} className={styles.aiSpinner} />
+              ) : (
+                <Sparkles size={16} />
+              )}
+            </button>
+            <button
+              onClick={() => setIsEditingDestination(true)}
+              className={styles.editSectionBtn}
+              title="Editar destino"
+            >
+              <Edit3 size={16} />
+            </button>
+          </div>
         </div>
 
         {isEditingDestination ? (
@@ -344,6 +435,7 @@ export function TripOverviewPage() {
               placeholder="¿A dónde vais?"
               className={styles.editInput}
             />
+
             <div className={styles.editActions}>
               <button
                 onClick={handleSaveDestination}
@@ -375,6 +467,101 @@ export function TripOverviewPage() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Mostrar indicador de carga */}
+        {isLoadingRecommendations && (
+          <div className={styles.recommendationsContainer}>
+            <div className={styles.loadingRecommendations}>
+              <div className={styles.loadingSpinner}>
+                <Loader2 size={32} className={styles.aiSpinner} />
+              </div>
+              <h4 className={styles.loadingTitle}>
+                <Sparkles size={20} />
+                Generando recomendaciones personalizadas...
+              </h4>
+              <p className={styles.loadingText}>
+                Nuestro asistente de IA está analizando tus preferencias para encontrar los destinos perfectos
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Mostrar recomendaciones */}
+        {showRecommendations && recommendations.length > 0 && !isLoadingRecommendations && (
+          <div className={styles.recommendationsContainer}>
+            <div className={styles.recommendationsHeader}>
+              <h4 className={styles.recommendationsTitle}>
+                <Sparkles size={20} />
+                Recomendaciones de destinos personalizadas ({recommendations.length})
+              </h4>
+              <button
+                onClick={() => setShowRecommendations(false)}
+                className={styles.closeRecommendationsBtn}
+                title="Cerrar recomendaciones"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className={styles.recommendationsContent}>
+              <div className={styles.destinationsGrid}>
+                {recommendations.map((destination, index) => (
+                  <div key={index} className={styles.destinationCard}>
+                    <div className={styles.destinationHeader}>
+                      <button
+                        onClick={() => {
+                          setNewDestination(destination.name);
+                          setIsEditingDestination(true);
+                          setShowRecommendations(false);
+                        }}
+                        className={styles.destinationTitle}
+                        title={`Seleccionar ${destination.name} como destino`}
+                      >
+                        <MapPin size={18} />
+                        {destination.name}
+                      </button>
+                    </div>
+                    
+                    <p className={styles.destinationDescription}>
+                      {destination.description}
+                    </p>
+                    
+                    <div className={styles.whyRecommended}>
+                      <h5>¿Por qué te lo recomendamos?</h5>
+                      <p>{destination.whyRecommended}</p>
+                    </div>
+                    
+                    <div className={styles.costInfo}>
+                      <span className={styles.costLabel}>💰 Presupuesto estimado:</span>
+                      <span className={styles.costRange}>
+                        {destination.estimatedCostRange.min}€ - {destination.estimatedCostRange.max}€
+                      </span>
+                    </div>
+                    
+                    <div className={styles.activitiesSection}>
+                      <h5>Actividades recomendadas:</h5>
+                      <ul className={styles.activitiesList}>
+                        {destination.recommendedActivities.slice(0, 3).map((activity, actIndex) => (
+                          <li key={actIndex}>{activity}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className={styles.climateInfo}>
+                      <div className={styles.climateConditions}>
+                        <span className={styles.climateLabel}>🌤️ Clima esperado:</span>
+                        <p>{destination.climateConditions}</p>
+                      </div>
+                      <div className={styles.seasonalAdvantages}>
+                        <span className={styles.seasonalLabel}>⭐ Ventajas de la época:</span>
+                        <p>{destination.seasonalAdvantages}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -565,6 +752,18 @@ export function TripOverviewPage() {
           }}
         />
       )}
+
+      {/* Modal de preferencias de IA */}
+      <AIPreferencesModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onGenerate={handleAIPreferences}
+        tripDates={trip ? {
+          startDate: trip.start_date || "",
+          endDate: trip.end_date || ""
+        } : undefined}
+        existingDescription={trip?.description}
+      />
     </section>
   );
 }

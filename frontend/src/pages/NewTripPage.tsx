@@ -126,26 +126,35 @@ export function NewTripPage() {
         {/* Paso 1: Nombre y descripción */}
         {step === 1 && (
           <div className={styles.step}>
+            <div className={styles.stepHeader}>
+              <h3 className={styles.stepTitle}>Información básica</h3>
+              <p className={styles.stepSubtitle}>
+                Comencemos con los detalles fundamentales de tu viaje
+              </p>
+            </div>
+            
             <label>
-              Nombre del viaje:
+              Nombre del viaje
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => handleChange("title", e.target.value)}
-                placeholder="Ej: Viaje a París"
+                placeholder="Ej: Aventura en París"
                 required
               />
             </label>
+            
             <label>
-              Descripción:
+              Descripción
               <textarea
                 value={form.description}
                 onChange={(e) => handleChange("description", e.target.value)}
-                placeholder="Describe el viaje, actividades previstas, etc."
-                rows={3}
+                placeholder="Describe el viaje, actividades previstas, experiencias que esperas vivir..."
+                rows={4}
                 required
               />
             </label>
+            
             <div className={styles.stepButtons}>
               <button
                 className={styles.nextBtn}
@@ -161,16 +170,14 @@ export function NewTripPage() {
         {/* Paso 2: Fechas (DateRangePicker) */}
         {step === 2 && (
           <div className={styles.step}>
-            <div style={{ textAlign: "center", marginBottom: "1.1rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1.25rem" }}>
-                ¿Cuándo quieres viajar?
-              </h3>
-              <p style={{ color: "#4B5563", fontSize: "1rem" }}>
-                Elige un rango de fechas para tu viaje. Si no lo tienes claro,
-                puedes dejarlo vacío.
+            <div className={styles.stepHeader}>
+              <h3 className={styles.stepTitle}>¿Cuándo viajarás?</h3>
+              <p className={styles.stepSubtitle}>
+                Selecciona las fechas de tu viaje. Si aún no estás seguro, puedes omitir este paso
               </p>
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            
+            <div className={styles.datePickerContainer}>
               <DateRange
                 editableDateInputs={true}
                 onChange={(ranges) => {
@@ -192,23 +199,23 @@ export function NewTripPage() {
                 locale={es}
               />
             </div>
-            <div style={{ marginTop: "1rem", textAlign: "center" }}>
-              <button
-                type="button"
-                className={styles.secondaryBtn}
-                onClick={() =>
-                  setRange([
-                    {
-                      startDate: undefined,
-                      endDate: undefined,
-                      key: "selection",
-                    },
-                  ])
-                }
-              >
-                Limpiar fechas
-              </button>
-            </div>
+            
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() =>
+                setRange([
+                  {
+                    startDate: undefined,
+                    endDate: undefined,
+                    key: "selection",
+                  },
+                ])
+              }
+            >
+              Limpiar fechas
+            </button>
+            
             <div className={styles.stepButtons}>
               <button className={styles.backBtn} onClick={handleBack}>
                 Atrás
@@ -216,7 +223,6 @@ export function NewTripPage() {
               <button
                 className={styles.nextBtn}
                 onClick={handleNextFromDates}
-                // Ahora siempre permite avanzar
               >
                 Siguiente
               </button>
@@ -227,16 +233,24 @@ export function NewTripPage() {
         {/* Paso 3: Destino */}
         {step === 3 && (
           <div className={styles.step}>
+            <div className={styles.stepHeader}>
+              <h3 className={styles.stepTitle}>¿Cuál es tu destino?</h3>
+              <p className={styles.stepSubtitle}>
+                Dinos a dónde planeas viajar para personalizar tu experiencia
+              </p>
+            </div>
+            
             <label>
-              Destino:
+              Destino
               <input
                 type="text"
                 value={form.destination}
                 onChange={(e) => handleChange("destination", e.target.value)}
-                placeholder="Ej: París"
+                placeholder="Ej: París, Francia"
                 required
               />
             </label>
+            
             <div className={styles.stepButtons}>
               <button className={styles.backBtn} onClick={handleBack}>
                 Atrás
@@ -251,7 +265,8 @@ export function NewTripPage() {
         {/* Paso 4: Resumen */}
         {step === 4 && (
           <div className={styles.step}>
-            <h3 className={styles.summaryTitle}>Resumen</h3>
+            <h3 className={styles.summaryTitle}>¡Casi listo! Revisa tu viaje</h3>
+            
             <div className={styles.summaryBox}>
               <img
                 src={form.imageUrl}
@@ -263,14 +278,19 @@ export function NewTripPage() {
                 <div className={styles.summaryDescription}>
                   {form.description}
                 </div>
-                <div className={styles.summaryDates}>
-                  {form.startDate} – {form.endDate}
-                </div>
-                <div className={styles.summaryDestination}>
-                  {form.destination}
-                </div>
+                {(form.startDate && form.endDate) && (
+                  <div className={styles.summaryDates}>
+                    📅 {form.startDate} – {form.endDate}
+                  </div>
+                )}
+                {form.destination && (
+                  <div className={styles.summaryDestination}>
+                    📍 {form.destination}
+                  </div>
+                )}
               </div>
             </div>
+            
             <div className={styles.stepButtons}>
               <button className={styles.backBtn} onClick={handleBack}>
                 Atrás
@@ -350,7 +370,7 @@ export function NewTripPage() {
                   }
                 }}
               >
-                Crear Viaje
+                ✨ Crear Viaje
               </button>
             </div>
           </div>
