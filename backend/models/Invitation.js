@@ -12,20 +12,11 @@ const Invitation = sequelize.define('Invitation', {
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('active', 'used', 'expired', 'revoked'),
+    type: DataTypes.ENUM('active', 'expired', 'revoked'),
     defaultValue: 'active'
   },
-  expires_at: DataTypes.DATE,
-  used_at: DataTypes.DATE,
-  max_uses: {
-    type: DataTypes.INTEGER,
-    defaultValue: 1
-  },
-  current_uses: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  custom_message: DataTypes.TEXT
+  code: DataTypes.STRING(6),
+  expires_at: DataTypes.DATE
 });
 
 Trip.hasMany(Invitation, { foreignKey: 'trip_id' });

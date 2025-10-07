@@ -6,8 +6,7 @@ const {
   getItineraryByTripId,
   createItinerary,
   updateItinerary,
-  deleteItinerary,
-  generateItinerayWithAI
+  deleteItinerary
 } = require("../controllers/itinerariesController");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { validateBody } = require("../middlewares/validateBody");
@@ -19,6 +18,5 @@ router.get("/trip/:trip_id", getItineraryByTripId);
 router.post("/", authMiddleware, validateBody(itinerarySchema), createItinerary);
 router.put("/:id", authMiddleware, validateBody(itinerarySchema), updateItinerary);
 router.delete("/:id", authMiddleware, deleteItinerary);
-router.post("/generate-ai", authMiddleware, generateItinerayWithAI);
 
 module.exports = router;

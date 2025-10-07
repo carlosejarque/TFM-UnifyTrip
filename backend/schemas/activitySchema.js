@@ -8,5 +8,6 @@ exports.activitySchema = Joi.object({
   start_date: Joi.date().required(),
   end_date: Joi.date().required(),
   created_by: Joi.number().integer(),
-  location: Joi.string().max(100).allow('', null)
+  location: Joi.string().max(100).allow('', null),
+  generatedByAI: Joi.boolean().default(false)
 });

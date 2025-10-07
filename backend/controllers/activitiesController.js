@@ -31,7 +31,23 @@ exports.getActivitiesByItineraryId = async (req, res) => {
 };
 
 exports.createActivity = async (req, res) => {
-  const { trip_id, itinerary_id, name, description, start_date, end_date, created_by, location } = req.body;
+  const userId = req.user.id;
+  const { trip_id, itinerary_id, name, description, start_date, end_date, location, generatedByAI } = req.body;
+  
+  // DEBUG: Ver qué valores estamos recibiendo
+  console.log('=== DEBUG CREATE ACTIVITY ===');
+  console.log('userId from req.user.id:', userId);
+  console.log('generatedByAI from body:', generatedByAI);
+  console.log('typeof generatedByAI:', typeof generatedByAI);
+  console.log('generatedByAI === false:', generatedByAI === false);
+  console.log('generatedByAI == false:', generatedByAI == false);
+  console.log('Full req.body:', req.body);
+  
+  const createdBy = generatedByAI === false ? userId : null;
+  
+  console.log('Final createdBy value:', createdBy);
+  console.log('==============================');
+  
   const activity = await Activity.create({
     trip_id,
     itinerary_id,
@@ -39,18 +55,35 @@ exports.createActivity = async (req, res) => {
     description,
     start_date,
     end_date,
-    created_by,
-    location
+    created_by: createdBy,
+    location,
+    generatedByAI
   });
   res.status(201).json({ message: "Activity added successfully", activity });
 };
 
 exports.updateActivity = async (req, res) => {
   const { id } = req.params;
-  const { trip_id, itinerary_id, name, description, start_date, end_date, created_by, location } = req.body;
+  const userId = req.user.id;
+  const { trip_id, itinerary_id, name, description, start_date, end_date, location, generatedByAI } = req.body;
   const activity = await Activity.findByPk(id);
 
   if (activity) {
+    // DEBUG: Ver qué valores estamos recibiendo en update
+    console.log('=== DEBUG UPDATE ACTIVITY ===');
+    console.log('Activity ID:', id);
+    console.log('userId from req.user.id:', userId);
+    console.log('generatedByAI from body:', generatedByAI);
+    console.log('typeof generatedByAI:', typeof generatedByAI);
+    console.log('generatedByAI === false:', generatedByAI === false);
+    console.log('Full req.body:', req.body);
+    
+    // Si generatedByAI es false, usar el userId como created_by, sino null
+    const createdBy = generatedByAI === false ? userId : null;
+    
+    console.log('Final createdBy value:', createdBy);
+    console.log('==============================');
+    
     await activity.update({
       trip_id,
       itinerary_id,
@@ -58,8 +91,9 @@ exports.updateActivity = async (req, res) => {
       description,
       start_date,
       end_date,
-      created_by,
-      location
+      created_by: createdBy,
+      location,
+      generatedByAI
     });
     res.json({ message: "Activity updated successfully" });
   } else {
