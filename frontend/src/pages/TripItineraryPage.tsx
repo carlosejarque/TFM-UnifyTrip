@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   X,
   Trash2,
+  Edit,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 
@@ -38,6 +39,7 @@ type Activity = {
   end_date: string; // ISO string - coincide con el backend
   created_by: number;
   location?: string | null;
+  generatedByAI?: boolean; // Campo para identificar actividades generadas por IA
 };
 
 export function TripItineraryPage() {
@@ -49,6 +51,62 @@ export function TripItineraryPage() {
   const [error, setError] = useState<string | null>(null);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [users, setUsers] = useState<{[key: number]: string}>({});
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+
+  // Función para obtener información del usuario
+  const fetchUserName = async (userId: number): Promise<string> => {
+    // Verificar si userId es válido
+    if (!userId || userId === null || userId === undefined) {
+      return 'Usuario desconocido';
+    }
+
+    if (users[userId]) {
+      return users[userId];
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`http://localhost:3000/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const username = response.data.username;
+      setUsers(prev => ({ ...prev, [userId]: username }));
+      return username;
+    } catch (error) {
+      console.error(`Error fetching user ${userId}:`, error);
+      return 'Usuario desconocido';
+    }
+  };
+
+  // Función para obtener el texto del creador de la actividad
+  // Componente para mostrar la etiqueta del creador
+  const ActivityCreatorLabel = ({ activity }: { activity: Activity }) => {
+    const [creatorText, setCreatorText] = useState<string>('');
+
+    useEffect(() => {
+      const loadCreator = async () => {
+        if (activity.generatedByAI) {
+          setCreatorText('🤖 IA');
+        } else {
+          const username = await fetchUserName(activity.created_by);
+          setCreatorText(`👤 ${username}`);
+        }
+      };
+      loadCreator();
+    }, [activity.created_by, activity.generatedByAI]);
+
+    if (!creatorText) return null;
+
+    return (
+      <span 
+        className={activity.generatedByAI ? styles.aiCreatorLabel : styles.userCreatorLabel}
+        title={activity.generatedByAI ? 'Generado por Inteligencia Artificial' : `Creado por ${creatorText.replace('👤 ', '')}`}
+      >
+        {creatorText}
+      </span>
+    );
+  };
 
   const getDateLimits = () => {
     if (!trip?.start_date || !trip?.end_date) {
@@ -213,6 +271,15 @@ export function TripItineraryPage() {
 
     setIsSubmitting(true);
     try {
+      // Validación: la hora de fin no puede ser menor que la hora de inicio
+      if (activityFormData.start_datetime && activityFormData.end_datetime) {
+        if (activityFormData.end_datetime <= activityFormData.start_datetime) {
+          toast.error("La fecha y hora de fin debe ser posterior a la de inicio");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       if (trip?.start_date && trip?.end_date) {
         const startDate = new Date(activityFormData.start_datetime);
         const endDate = new Date(activityFormData.end_datetime);
@@ -255,14 +322,15 @@ export function TripItineraryPage() {
         return;
       }
 
+      // Construir fechas en formato ISO local (sin conversión UTC)
       const startDate = activityFormData.start_datetime
-        ? new Date(activityFormData.start_datetime).toISOString()
+        ? activityFormData.start_datetime + ":00"
         : null;
       const endDate = activityFormData.end_datetime
-        ? new Date(activityFormData.end_datetime).toISOString()
+        ? activityFormData.end_datetime + ":00"
         : null;
 
-      const response = await axios.post(
+      await axios.post(
         `http://localhost:3000/activities`,
         {
           trip_id: parseInt(tripId),
@@ -272,14 +340,15 @@ export function TripItineraryPage() {
           start_date: startDate,
           end_date: endDate,
           location: activityFormData.location || null,
+          generatedByAI: false, // Marcar como creada manualmente
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      const newActivity = response.data.activity || response.data;
-      setActivities((prev) => [...prev, newActivity]);
+      // Recargar las actividades desde la BD para asegurar consistencia
+      await reloadActivities();
 
       resetActivityForm();
       toast.success("Actividad creada exitosamente");
@@ -305,13 +374,111 @@ export function TripItineraryPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setActivities((prev) =>
-        prev.filter((activity) => activity.id !== activityId)
-      );
+      // Recargar las actividades desde la BD para asegurar consistencia
+      await reloadActivities();
       toast.success("Actividad eliminada exitosamente");
     } catch (error) {
       console.error("Error deleting activity:", error);
       toast.error("Error al eliminar la actividad");
+    }
+  };
+
+  const startEditActivity = (activity: Activity) => {
+    setEditingActivity(activity);
+  };
+
+  const cancelEdit = () => {
+    setEditingActivity(null);
+  };
+
+  // Función para extraer la fecha local de un string ISO
+  const getLocalDateFromISO = (isoString: string): string => {
+    return isoString.split('T')[0];
+  };
+
+  // Función para extraer la hora local de un string ISO
+  const getLocalTimeFromISO = (isoString: string): string => {
+    return isoString.split('T')[1]?.slice(0, 5) || "";
+  };
+
+  const updateActivity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingActivity) return;
+
+    setIsSubmitting(true);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const date = formData.get("date") as string;
+      const startTime = formData.get("start_time") as string;
+      const endTime = formData.get("end_time") as string;
+
+      // Validación: la hora de fin no puede ser menor que la hora de inicio
+      if (startTime && endTime && endTime < startTime) {
+        toast.error("La hora de fin no puede ser anterior a la hora de inicio");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Construir las fechas ISO en hora local (sin Z para evitar conversión UTC)
+      const startDate = startTime 
+        ? `${date}T${startTime}:00`
+        : `${date}T00:00:00`;
+      
+      const endDate = endTime 
+        ? `${date}T${endTime}:00`
+        : `${date}T23:59:59`;
+
+      const activityData = {
+        trip_id: editingActivity.trip_id,
+        itinerary_id: editingActivity.itinerary_id,
+        name: formData.get("name"),
+        description: formData.get("description"),
+        location: formData.get("location"),
+        start_date: startDate,
+        end_date: endDate,
+      };
+
+      await axios.put(
+        `http://localhost:3000/activities/${editingActivity.id}`,
+        activityData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      await reloadActivities();
+      toast.success("Actividad actualizada exitosamente");
+      setEditingActivity(null);
+    } catch (error) {
+      console.error("Error updating activity:", error);
+      toast.error("Error al actualizar la actividad");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Función para recargar las actividades desde la BD
+  const reloadActivities = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token || !itinerary?.id) return;
+
+      const activitiesResponse = await axios.get(
+        `http://localhost:3000/activities/itinerary/${itinerary.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const activitiesData = Array.isArray(activitiesResponse.data)
+        ? activitiesResponse.data
+        : [];
+      setActivities(activitiesData);
+    } catch (error) {
+      console.error("Error recargando actividades:", error);
     }
   };
 
@@ -330,32 +497,75 @@ export function TripItineraryPage() {
         }
 
         const response = await axios.post(
-          `http://localhost:3000/itineraries/${itinerary.id}/generate-ai`,
+          'http://localhost:3000/AI/generate-itinerary',
           {
-            trip_id: parseInt(tripId!),
-            trip_title: trip.title,
             destination: trip.destination || null,
-            start_date: trip.start_date,
-            end_date: trip.end_date,
+            startDate: trip.start_date,
+            endDate: trip.end_date,
           },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        const newActivities = response.data.activities || [];
+        console.log('AI Itinerary Response:', response.data);
+
+        if (!response.data.success) {
+          throw new Error(response.data.error || "Error generando itinerario");
+        }
+
+        const aiActivities = response.data.data.activities || [];
         
-        if (!Array.isArray(newActivities)) {
+        if (!Array.isArray(aiActivities)) {
           throw new Error("Respuesta inválida del servidor");
         }
 
-        setActivities((prev) => [...prev, ...newActivities]);
+        // Convertir las actividades de IA al formato de la base de datos
+        const newActivities = await Promise.all(
+          aiActivities.map(async (aiActivity) => {
+            try {
+              // Crear la actividad en la base de datos
+              const activityResponse = await axios.post(
+                'http://localhost:3000/activities',
+                {
+                  trip_id: parseInt(tripId!),
+                  itinerary_id: itinerary?.id || 0,
+                  name: aiActivity.name,
+                  description: aiActivity.description,
+                  start_date: aiActivity.startdate, // formato YYYY-MM-DDTHH:MM
+                  end_date: aiActivity.enddate,     // formato YYYY-MM-DDTHH:MM
+                  location: aiActivity.location || null,
+                  generatedByAI: true, // Marcar como generada por IA
+                },
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              return activityResponse.data;
+            } catch (error) {
+              console.error('Error creando actividad:', error);
+              // Si falla crear una actividad específica, continuamos con las demás
+              return null;
+            }
+          })
+        );
 
-        return { activitiesCount: newActivities.length };
+        // Filtrar actividades que se crearon exitosamente
+        const validActivities = newActivities.filter(activity => activity !== null);
+        
+        // En lugar de actualizar el estado local con datos parciales,
+        // recargamos todas las actividades desde la BD para asegurar consistencia
+        await reloadActivities();
+
+        return { activitiesCount: validActivities.length };
       } catch (error) {
         console.error("Error en generación con IA:", error);
         if (axios.isAxiosError(error)) {
-          const message = error.response?.data?.message || error.message;
+          const errorData = error.response?.data;
+          if (errorData && !errorData.success) {
+            throw new Error(errorData.error || "Error del servidor");
+          }
+          const message = errorData?.message || error.message;
           throw new Error(message);
         }
         throw error;
@@ -392,7 +602,7 @@ export function TripItineraryPage() {
               <X size={20} />
             </button>
           </div>
-          <form className={styles.activityForm} onSubmit={createActivity}>
+                    <form className={styles.activityForm} onSubmit={createActivity}>
             <label>
               Nombre de la actividad:
               <input
@@ -579,8 +789,19 @@ export function TripItineraryPage() {
             {activitiesByDay[date].map((activity) => (
               <div key={activity.id} className={styles.activityCard}>
                 <div className={styles.activityHeader}>
-                  <h4 className={styles.activityTitle}>{activity.name}</h4>
-                  <Dialog.Root>
+                  <div className={styles.activityTitleSection}>
+                    <h4 className={styles.activityTitle}>{activity.name}</h4>
+                    <ActivityCreatorLabel activity={activity} />
+                  </div>
+                  <div className={styles.activityActions}>
+                    <button
+                      className={styles.editButton}
+                      title="Editar actividad"
+                      onClick={() => startEditActivity(activity)}
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <Dialog.Root>
                     <Dialog.Trigger asChild>
                       <button
                         className={styles.deleteButton}
@@ -619,6 +840,7 @@ export function TripItineraryPage() {
                       </Dialog.Content>
                     </Dialog.Portal>
                   </Dialog.Root>
+                  </div>
                 </div>
                 <div className={styles.activityInfo}>
                   <span className={styles.activityTime}>
@@ -643,6 +865,129 @@ export function TripItineraryPage() {
           </div>
         </div>
       ))}
+
+      {/* Dialog de edición */}
+      <Dialog.Root open={!!editingActivity} onOpenChange={(open) => !open && cancelEdit()}>
+        <Dialog.Portal>
+          <Dialog.Overlay className={styles.dialogOverlay} />
+          <Dialog.Content className={styles.dialogContent}>
+            <Dialog.Title className={styles.dialogTitle}>
+              Editar Actividad
+            </Dialog.Title>
+            <Dialog.Description className={styles.dialogDescription}>
+              Modifica los campos de la actividad
+            </Dialog.Description>
+            
+            {editingActivity && (
+              <form onSubmit={updateActivity} className={styles.activityForm}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="name" className={styles.label}>
+                    Nombre de la actividad *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    defaultValue={editingActivity.name}
+                    required
+                    className={styles.input}
+                    placeholder="Ej: Visitar el museo"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="description" className={styles.label}>
+                    Descripción
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    defaultValue={editingActivity.description || ""}
+                    className={styles.textarea}
+                    placeholder="Describe la actividad..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="location" className={styles.label}>
+                      Ubicación
+                    </label>
+                    <input
+                      type="text"
+                      id="location"
+                      name="location"
+                      defaultValue={editingActivity.location || ""}
+                      className={styles.input}
+                      placeholder="Dirección o lugar"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="date" className={styles.label}>
+                      Fecha *
+                    </label>
+                    <input
+                      type="date"
+                      id="date"
+                      name="date"
+                      defaultValue={getLocalDateFromISO(editingActivity.start_date)}
+                      required
+                      className={styles.input}
+                      min={trip?.start_date || ""}
+                      max={trip?.end_date || ""}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="start_time" className={styles.label}>
+                      Hora de inicio
+                    </label>
+                    <input
+                      type="time"
+                      id="start_time"
+                      name="start_time"
+                      defaultValue={getLocalTimeFromISO(editingActivity.start_date)}
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="end_time" className={styles.label}>
+                      Hora de fin
+                    </label>
+                    <input
+                      type="time"
+                      id="end_time"
+                      name="end_time"
+                      defaultValue={getLocalTimeFromISO(editingActivity.end_date)}
+                      className={styles.input}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.dialogActions}>
+                  <Dialog.Close asChild>
+                    <button type="button" className={styles.cancelButton}>
+                      Cancelar
+                    </button>
+                  </Dialog.Close>
+                  <button
+                    type="submit"
+                    className={styles.submitButton}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Guardando..." : "Guardar cambios"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }

@@ -10,12 +10,9 @@ import {
   Users,
   X,
   Check,
-  UserPlus,
   Sparkles,
 } from "lucide-react";
 import styles from "./TripOverviewPage.module.css";
-import { InviteModal } from "../components/InviteModal";
-import { InvitationsList } from "../components/InvitationsList";
 import { AIPreferencesModal } from "../components/AIDestinationForm";
 
 type Trip = {
@@ -58,18 +55,15 @@ export function TripOverviewPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Estados para edición
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDestination, setIsEditingDestination] = useState(false);
   const [isEditingDates, setIsEditingDates] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
   const [newDestination, setNewDestination] = useState("");
   const [newStartDate, setNewStartDate] = useState("");
   const [newEndDate, setNewEndDate] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [isShowingParticipants, setIsShowingParticipants] = useState(false);
-  
-  // Estados para invitaciones
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showInvitationsList, setShowInvitationsList] = useState(false);
 
   // Estados para recomendaciones de IA
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
@@ -102,6 +96,7 @@ export function TripOverviewPage() {
           }
         );
         setTrip(tripResponse.data);
+        setNewTitle(tripResponse.data.title || "");
         setNewDestination(tripResponse.data.destination || "");
         setNewStartDate(tripResponse.data.start_date || "");
         setNewEndDate(tripResponse.data.end_date || "");
@@ -195,17 +190,61 @@ export function TripOverviewPage() {
     }
   };
 
+  // Función para obtener imagen de Unsplash
+  const getUnsplashImage = async (destination: string): Promise<string | null> => {
+    try {
+      const UNSPLASH_ACCESS_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY; 
+      const response = await axios.get(
+        `https://api.unsplash.com/search/photos?client_id=${UNSPLASH_ACCESS_KEY}&query=${encodeURIComponent(
+          destination
+        )}&orientation=landscape&per_page=1`
+      );
+      
+      if (response.data.results && response.data.results.length > 0) {
+        return response.data.results[0].urls.regular;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error obteniendo imagen de Unsplash:', error);
+      return null;
+    }
+  };
+
   // Funciones para edición
   const handleSaveDestination = async () => {
     try {
       const token = localStorage.getItem("token");
+      
+      // Obtener imagen de Unsplash para el nuevo destino
+      const newImageUrl = await getUnsplashImage(newDestination);
+      
+      // Preparar los datos a actualizar
+      const updateData: {
+        title?: string;
+        destination: string;
+        image_url?: string;
+      } = {
+        title: trip?.title,
+        destination: newDestination
+      };
+      
+      // Añadir la imagen si se obtuvo una de Unsplash
+      if (newImageUrl) {
+        updateData.image_url = newImageUrl;
+      }
+      
       await axios.put(
         `http://localhost:3000/trips/${id}`,
-        { title: trip?.title , destination: newDestination },
+        updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
       setTrip((prev) =>
-        prev ? { ...prev, destination: newDestination } : null
+        prev ? { 
+          ...prev, 
+          destination: newDestination,
+          ...(newImageUrl && { image_url: newImageUrl })
+        } : null
       );
       setIsEditingDestination(false);
     } catch (err) {
@@ -218,7 +257,7 @@ export function TripOverviewPage() {
       const token = localStorage.getItem("token");
       await axios.put(
         `http://localhost:3000/trips/${id}`,
-        { start_date: newStartDate, end_date: newEndDate },
+        { title: trip?.title, start_date: newStartDate, end_date: newEndDate },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTrip((prev) =>
@@ -233,6 +272,23 @@ export function TripOverviewPage() {
       setIsEditingDates(false);
     } catch (err) {
       console.error("Error updating dates:", err);
+    }
+  };
+
+  const handleSaveTitle = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `http://localhost:3000/trips/${id}`,
+        { title: newTitle },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTrip((prev) =>
+        prev ? { ...prev, title: newTitle } : null
+      );
+      setIsEditingTitle(false);
+    } catch (err) {
+      console.error("Error updating title:", err);
     }
   };
 
@@ -255,11 +311,13 @@ export function TripOverviewPage() {
 
   const handleCancelEdit = () => {
     if (trip) {
+      setNewTitle(trip.title || "");
       setNewDestination(trip.destination || "");
       setNewStartDate(trip.start_date || "");
       setNewEndDate(trip.end_date || "");
       setNewDescription(trip.description || "");
     }
+    setIsEditingTitle(false);
     setIsEditingDestination(false);
     setIsEditingDates(false);
     setIsEditingDescription(false);
@@ -305,7 +363,46 @@ export function TripOverviewPage() {
           <div className={styles.imageOverlay}></div>
         </div>
         <div className={styles.bannerInfo}>
-          <h1 className={styles.tripTitle}>{trip.title}</h1>
+          <div className={styles.titleContainer}>
+            {isEditingTitle ? (
+              <div className={styles.editTitleSection}>
+                <input
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Título del viaje"
+                  className={styles.editTitleInput}
+                />
+                <div className={styles.titleActions}>
+                  <button
+                    onClick={handleSaveTitle}
+                    className={styles.saveTitleBtn}
+                    title="Guardar título"
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button 
+                    onClick={handleCancelEdit} 
+                    className={styles.cancelTitleBtn}
+                    title="Cancelar edición"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.titleDisplay}>
+                <h1 className={styles.tripTitle}>{trip.title}</h1>
+                <button
+                  onClick={() => setIsEditingTitle(true)}
+                  className={styles.editTitleBtn}
+                  title="Editar título"
+                >
+                  <Edit3 size={16} />
+                </button>
+              </div>
+            )}
+          </div>
           <div className={styles.bannerMeta}>
             <div className={styles.infoItem}>
               <MapPin className={styles.infoIcon} size={20} />
@@ -334,66 +431,6 @@ export function TripOverviewPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Sección de Descripción */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>
-            <AlertCircle size={20} />
-            Descripción del viaje
-          </h3>
-          <button
-            onClick={() => setIsEditingDescription(true)}
-            className={styles.editSectionBtn}
-            title="Editar descripción"
-          >
-            <Edit3 size={16} />
-          </button>
-        </div>
-
-        {isEditingDescription ? (
-          <div className={styles.editSection}>
-            <textarea
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              placeholder="Añade una descripción para tu viaje..."
-              className={styles.editTextarea}
-              rows={4}
-            />
-            <div className={styles.editActions}>
-              <button
-                onClick={handleSaveDescription}
-                className={styles.saveBtn}
-              >
-                <Check size={16} />
-                Guardar
-              </button>
-              <button onClick={handleCancelEdit} className={styles.cancelBtn}>
-                <X size={16} />
-                Cancelar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className={styles.sectionContent}>
-            {trip.description ? (
-              <p className={styles.sectionText}>{trip.description}</p>
-            ) : (
-              <div className={styles.emptyState}>
-                <p className={styles.emptyText}>
-                  No hay descripción aún.
-                  <button
-                    onClick={() => setIsEditingDescription(true)}
-                    className={styles.emptyAction}
-                  >
-                    Añade una descripción
-                  </button>
-                </p>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Sección de Destino */}
@@ -566,6 +603,66 @@ export function TripOverviewPage() {
         )}
       </div>
 
+      {/* Sección de Descripción */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>
+            <AlertCircle size={20} />
+            Descripción del viaje
+          </h3>
+          <button
+            onClick={() => setIsEditingDescription(true)}
+            className={styles.editSectionBtn}
+            title="Editar descripción"
+          >
+            <Edit3 size={16} />
+          </button>
+        </div>
+
+        {isEditingDescription ? (
+          <div className={styles.editSection}>
+            <textarea
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder="Añade una descripción para tu viaje..."
+              className={styles.editTextarea}
+              rows={4}
+            />
+            <div className={styles.editActions}>
+              <button
+                onClick={handleSaveDescription}
+                className={styles.saveBtn}
+              >
+                <Check size={16} />
+                Guardar
+              </button>
+              <button onClick={handleCancelEdit} className={styles.cancelBtn}>
+                <X size={16} />
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.sectionContent}>
+            {trip.description ? (
+              <p className={styles.sectionText}>{trip.description}</p>
+            ) : (
+              <div className={styles.emptyState}>
+                <p className={styles.emptyText}>
+                  No hay descripción aún.
+                  <button
+                    onClick={() => setIsEditingDescription(true)}
+                    className={styles.emptyAction}
+                  >
+                    Añade una descripción
+                  </button>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Sección de Fechas */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
@@ -638,121 +735,6 @@ export function TripOverviewPage() {
         )}
       </div>
 
-      {/* Sección de Participantes */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>
-            <Users size={20} />
-            Participantes ({participants.length})
-          </h3>
-          <button
-            onClick={() => setIsShowingParticipants(!isShowingParticipants)}
-            className={styles.editSectionBtn}
-            title="Gestionar participantes"
-          >
-            <Users size={16} />
-          </button>
-        </div>
-
-        <div className={styles.sectionContent}>
-          <div className={styles.participantsPreview}>
-            {participants.slice(0, 3).map((participant) => (
-              <div key={participant.id} className={styles.participantAvatar}>
-                {participant.avatar ? (
-                  <img src={participant.avatar} alt={participant.username} />
-                ) : (
-                  <div className={styles.avatarPlaceholder}>
-                    {participant.username.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-            ))}
-            {participants.length > 3 && (
-              <div className={styles.moreParticipants}>
-                +{participants.length - 3}
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => setIsShowingParticipants(true)}
-            className={styles.viewAllBtn}
-          >
-            Ver todos los participantes
-          </button>
-        </div>
-      </div>
-
-      {/* Modal de participantes */}
-      {isShowingParticipants && (
-        <div className={styles.participantsModal}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <h3>Participantes del viaje</h3>
-              <button
-                onClick={() => setIsShowingParticipants(false)}
-                className={styles.closeBtn}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className={styles.participantsList}>
-              {participants.map((participant) => (
-                <div key={participant.id} className={styles.participantCard}>
-                  <div className={styles.participantAvatar}>
-                    {participant.avatar ? (
-                      <img src={participant.avatar} alt={participant.username} />
-                    ) : (
-                      <div className={styles.avatarPlaceholder}>
-                        {participant.username.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.participantInfo}>
-                    <h4>{participant.username}</h4>
-                    <p>{participant.email}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className={styles.participantActions}>
-              <button 
-                className={styles.addParticipantBtn}
-                onClick={() => {
-                  setShowInviteModal(true);
-                  setIsShowingParticipants(false);
-                }}
-              >
-                <UserPlus size={18} />
-                Invitar participante
-              </button>
-              <button 
-                className={styles.viewInvitationsBtn}
-                onClick={() => setShowInvitationsList(!showInvitationsList)}
-              >
-                Ver invitaciones
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Componentes de invitaciones */}
-      <InviteModal
-        isOpen={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        tripId={trip?.id || 0}
-        tripTitle={trip?.title || ""}
-      />
-
-      {showInvitationsList && trip && (
-        <InvitationsList
-          tripId={trip.id}
-          onInvitationRevoked={() => {
-            // Opcional: recargar participantes si es necesario
-          }}
-        />
-      )}
-
       {/* Modal de preferencias de IA */}
       <AIPreferencesModal
         isOpen={showAIModal}
@@ -762,7 +744,6 @@ export function TripOverviewPage() {
           startDate: trip.start_date || "",
           endDate: trip.end_date || ""
         } : undefined}
-        existingDescription={trip?.description}
       />
     </section>
   );

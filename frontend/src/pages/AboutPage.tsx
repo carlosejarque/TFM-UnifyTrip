@@ -77,7 +77,6 @@ export function AboutPage() {
                     <Globe className={styles.statIcon} />
                     <span className={styles.statNumber}>100+</span>
                     <span className={styles.statLabel}>Viajes organizados</span>
-                    <Info size={16} className={styles.infoIcon} />
                   </div>
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
@@ -94,7 +93,6 @@ export function AboutPage() {
                     <Heart className={styles.statIcon} />
                     <span className={styles.statNumber}>500+</span>
                     <span className={styles.statLabel}>Usuarios satisfechos</span>
-                    <Info size={16} className={styles.infoIcon} />
                   </div>
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
@@ -111,7 +109,6 @@ export function AboutPage() {
                     <Star className={styles.statIcon} />
                     <span className={styles.statNumber}>4.9</span>
                     <span className={styles.statLabel}>Valoración promedio</span>
-                    <Info size={16} className={styles.infoIcon} />
                   </div>
                 </Tooltip.Trigger>
                 <Tooltip.Portal>

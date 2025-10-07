@@ -81,7 +81,7 @@ export function NewTripPage() {
       setForm((prev) => ({
         ...prev,
         imageUrl:
-          "https://images.unsplash.com/photo-1519125323398-675f0ddb6308",
+          "https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
       }));
       handleNext();
       return;
@@ -97,7 +97,7 @@ export function NewTripPage() {
       const url =
         data.results && data.results.length > 0
           ? data.results[0].urls.regular
-          : "https://images.unsplash.com/photo-1519125323398-675f0ddb6308";
+          : "https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80";
 
       setForm((prev) => ({
         ...prev,
@@ -108,7 +108,7 @@ export function NewTripPage() {
       setForm((prev) => ({
         ...prev,
         imageUrl:
-          "https://images.unsplash.com/photo-1519125323398-675f0ddb6308", // fallback
+          "https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80", // fallback
       }));
       console.error("Error fetching image from Unsplash:", error);
       handleNext();

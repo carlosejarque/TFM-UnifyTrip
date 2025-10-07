@@ -41,7 +41,6 @@ type AIPreferencesModalProps = {
     startDate: string;
     endDate: string;
   };
-  existingDescription?: string;
 };
 
 export function AIPreferencesModal({
@@ -49,7 +48,6 @@ export function AIPreferencesModal({
   onClose,
   onGenerate,
   tripDates,
-  existingDescription,
 }: AIPreferencesModalProps) {
   const [preferences, setPreferences] = useState<AIPreferences>({
     startDate: tripDates?.startDate || "",
@@ -62,7 +60,7 @@ export function AIPreferencesModal({
     travelStyle: "",
     numberOfTravelers: 2,
     interests: [],
-    additionalInfo: existingDescription || "",
+    additionalInfo: "",
   });
 
   const [isGenerating, setIsGenerating] = useState(false);

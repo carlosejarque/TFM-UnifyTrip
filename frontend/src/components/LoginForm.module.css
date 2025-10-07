@@ -101,3 +101,51 @@ input {
   color: var(--color-secondary);
 }
 
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .form {
+    max-width: 350px;
+    padding: 1.8rem;
+  }
+  
+  .logo {
+    height: 180px;
+    width: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .form {
+    max-width: 90%;
+    padding: 1.5rem;
+    margin: 1rem auto;
+  }
+  
+  .logo {
+    height: 150px;
+    width: 150px;
+  }
+  
+  .heading {
+    font-size: 1.3rem;
+  }
+  
+  label {
+    font-size: 0.95rem;
+  }
+  
+  input {
+    padding: 0.65rem;
+    font-size: 0.95rem;
+  }
+  
+  .button {
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+  }
+  
+  .registerPrompt {
+    font-size: 0.95rem;
+  }
+}
+

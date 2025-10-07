@@ -40,3 +40,31 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  #root {
+    max-width: 100%;
+    padding: 1.5rem;
+  }
+  
+  .logo {
+    height: 5em;
+    padding: 1.2em;
+  }
+}
+
+@media (max-width: 768px) {
+  #root {
+    padding: 1rem;
+  }
+  
+  .logo {
+    height: 4em;
+    padding: 1em;
+  }
+  
+  .card {
+    padding: 1.5em;
+  }
+}

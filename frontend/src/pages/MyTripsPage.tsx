@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { TripCard } from "../components/TripCard";
+import { JoinTripModal } from "../components/JoinTripModal";
 import { Link } from "react-router-dom";
 import { 
   MapPin, 
@@ -8,7 +9,8 @@ import {
   CheckCircle2, 
   Loader2, 
   AlertCircle,
-  Plane
+  Plane,
+  LogIn
 } from "lucide-react";
 import styles from "./MyTripsPage.module.css";
 import axios from "axios";
@@ -50,6 +52,7 @@ export function MyTripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   useEffect(() => {
     const fetchTrips = async () => {
@@ -90,6 +93,11 @@ export function MyTripsPage() {
     };
     fetchTrips();
   }, []);
+
+  const handleJoinSuccess = () => {
+    // Recargar los viajes después de unirse a uno nuevo
+    window.location.reload();
+  };
 
   if (!isLoggedIn) {
     return (
@@ -150,9 +158,18 @@ export function MyTripsPage() {
             <Plane className={styles.titleIcon} size={32} />
             <h1 className={styles.title}>Mis Viajes</h1>
           </div>
-          <Link to="/newtrip" className={styles.newTripBtn}>
-            Empezar un nuevo viaje
-          </Link>
+          <div className={styles.headerActions}>
+            <button 
+              onClick={() => setShowJoinModal(true)}
+              className={styles.joinTripBtn}
+            >
+              <LogIn size={20} />
+              Unirse a un viaje
+            </button>
+            <Link to="/newtrip" className={styles.newTripBtn}>
+              Empezar un nuevo viaje
+            </Link>
+          </div>
         </div>
 
         {active.length > 0 && (
@@ -229,6 +246,12 @@ export function MyTripsPage() {
           )}
         </div>
       </div>
+
+      <JoinTripModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onSuccess={handleJoinSuccess}
+      />
     </div>
   );
 }

@@ -100,6 +100,20 @@
   justify-content: center;
 }
 
+.titleContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.titleDisplay {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
 .tripTitle {
   font-family: var(--font-heading);
   font-size: 2.5rem;
@@ -107,6 +121,93 @@
   color: var(--color-bg-dark);
   margin: 0;
   line-height: 1.2;
+  flex-grow: 1;
+}
+
+.editTitleBtn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--color-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.editTitleBtn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.editTitleSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.editTitleInput {
+  flex-grow: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--color-primary);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-bg-dark);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.editTitleInput:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.titleActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.saveTitleBtn,
+.cancelTitleBtn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.saveTitleBtn {
+  color: #10b981;
+}
+
+.saveTitleBtn:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
+.cancelTitleBtn {
+  color: #ef4444;
+}
+
+.cancelTitleBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  transform: translateY(-1px);
 }
 
 .infoItem {

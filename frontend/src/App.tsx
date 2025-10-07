@@ -9,12 +9,15 @@ import { TripOverviewPage } from "./pages/TripOverviewPage";
 import { TripItineraryPage } from "./pages/TripItineraryPage";
 import { TripBudgetPage } from "./pages/TripBudgetPage";
 import { TripPollPage } from "./pages/TripPollPage";
+import { TripParticipantsPage } from "./pages/TripParticipantsPage";
 import { JoinTripPage } from "./pages/JoinTripPage";
 import { AboutPage } from "./pages/AboutPage";
 import { HelpPage } from "./pages/HelpPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { Navbar } from "./components/Navbar";
 import { Toaster } from "sonner";
+import { Footer } from "./components/Footer";
 
 function App() {
   return (
@@ -27,17 +30,20 @@ function App() {
           <Route path="/help" element={<HelpPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/mytrips" element={<MyTripsPage />} />
           <Route path="/trips/:id" element={<TripDetailsPage />}>
             <Route index element={<TripOverviewPage />} />
             <Route path="polls" element={<TripPollPage />} />
             <Route path="itinerary" element={<TripItineraryPage />} />
+            <Route path="participants" element={<TripParticipantsPage />} />
             <Route path="budget" element={<TripBudgetPage />} />
           </Route>
           <Route path="/newtrip" element={<NewTripPage />} />
-          <Route path="/join-trip/:token" element={<JoinTripPage />} />
+          <Route path="/invitations/join/:token" element={<JoinTripPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <Footer />
       </BrowserRouter>
       <Toaster position="top-center" richColors />
     </>

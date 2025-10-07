@@ -3,3 +3,16 @@ body{
     padding: 0;
     background-color: #F3F3F3;
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    body {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+}
