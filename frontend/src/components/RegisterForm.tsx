@@ -50,7 +50,6 @@ export function RegisterForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
-      {/* <img src={logo} alt="Logo UnifyTrip" className={styles.logo} /> */}
       <h2 className={styles.heading}>Crear cuenta</h2>
       <div className={styles.field}>
         <label htmlFor="name">Nombre de usuario</label>

@@ -73,10 +73,8 @@ export function AIPreferencesModal({
         let newClimate = [...prev.climate];
         
         if (value === "any") {
-          // Si selecciona "any", deselecciona todo lo demás
           newClimate = newClimate.includes("any") ? [] : ["any"];
         } else {
-          // Si selecciona otra opción, quita "any" si existe
           newClimate = newClimate.filter(item => item !== "any");
           newClimate = newClimate.includes(value)
             ? newClimate.filter(item => item !== value)
@@ -160,7 +158,6 @@ export function AIPreferencesModal({
   };
 
   const handleGenerate = async () => {
-    // Validación final de todos los pasos
     const allErrors = [
       ...validateStep(1),
       ...validateStep(2)
@@ -168,7 +165,6 @@ export function AIPreferencesModal({
     
     if (allErrors.length > 0) {
       setValidationErrors(allErrors);
-      // Volver al primer paso con errores
       if (validateStep(1).length > 0) setCurrentStep(1);
       else if (validateStep(2).length > 0) setCurrentStep(2);
       return;
@@ -176,7 +172,6 @@ export function AIPreferencesModal({
     
     setValidationErrors([]);
     setIsGenerating(true);
-    // Simular tiempo de procesamiento
     await new Promise(resolve => setTimeout(resolve, 2000));
     onGenerate(preferences);
     setIsGenerating(false);
@@ -185,7 +180,6 @@ export function AIPreferencesModal({
 
   const renderStep1 = () => (
     <>
-      {/* Fechas del viaje - Editables */}
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>
           📅 Fechas del viaje *

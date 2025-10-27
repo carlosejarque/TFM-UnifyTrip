@@ -40,7 +40,6 @@ export function TripParticipantsPage() {
         setError(null);
         const token = localStorage.getItem("token");
 
-        // Cargar datos del viaje
         const tripResponse = await axios.get(
           `http://localhost:3000/trips/${id}`,
           {
@@ -49,7 +48,6 @@ export function TripParticipantsPage() {
         );
         setTrip(tripResponse.data);
 
-        // Cargar participantes
         const tripParticipants = await axios.get(
           `http://localhost:3000/trip-participants/trip/${id}`,
           {
@@ -73,9 +71,8 @@ export function TripParticipantsPage() {
         );
 
         setParticipants(participantsData);
-      } catch (err) {
+      } catch {
         setError("No se pudieron cargar los participantes.");
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -123,7 +120,6 @@ export function TripParticipantsPage() {
         </button>
       </div>
 
-      {/* Participantes actuales */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
@@ -165,7 +161,6 @@ export function TripParticipantsPage() {
         </div>
       </section>
 
-      {/* Modal de compartir */}
       <ShareTripModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}

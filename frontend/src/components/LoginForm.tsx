@@ -60,7 +60,6 @@ export const LoginForm = () => {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
-      {/* <img src={logo} alt="Logo UnifyTrip" className={styles.logo} /> */}
       <h2 className={styles.heading}>Iniciar sesión</h2>
       <div className={styles.field}>
         <label htmlFor="email">Correo electrónico</label>

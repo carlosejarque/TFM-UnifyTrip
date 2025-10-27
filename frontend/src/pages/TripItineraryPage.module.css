@@ -229,7 +229,6 @@
   line-height: 1.5;
 }
 
-/* Responsive design */
 @media (max-width: 640px) {
   .actions {
     flex-direction: column-reverse;
@@ -245,7 +244,6 @@
   }
 }
 
-/* Estilos para el formulario de actividades */
 .formOverlay {
   position: fixed;
   top: 0;
@@ -428,7 +426,6 @@
   cursor: not-allowed;
 }
 
-/* Activity header with delete button */
 .activityHeader {
   display: flex;
   justify-content: space-between;
@@ -474,7 +471,6 @@
   opacity: 1;
 }
 
-/* Dialog styles */
 .dialogOverlay {
   background: rgba(0, 0, 0, 0.5);
   position: fixed;
@@ -558,7 +554,6 @@
   }
 }
 
-/* Media queries para responsive design */
 @media (max-width: 640px) {
   .formRow {
     grid-template-columns: 1fr;

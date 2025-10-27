@@ -8,7 +8,6 @@
   animation: fadeIn 0.6s ease-out;
 }
 
-/* Loading and Error States */
 .loadingWrapper,
 .errorWrapper {
   display: flex;
@@ -55,7 +54,6 @@
   max-width: 400px;
 }
 
-/* Modern Banner */
 .banner {
   display: flex;
   gap: 3rem;
@@ -334,7 +332,6 @@
   font-size: 1rem;
 }
 
-/* Modern Warning Block */
 .warningBlock {
   background: linear-gradient(135deg, #fff7ed 0%, #fef3e0 100%);
   border: 2px solid #fb923c;
@@ -435,7 +432,6 @@
 }
 
 
-/* Responsive Design */
 @media (max-width: 900px) {
   .banner {
     flex-direction: column;
@@ -514,7 +510,6 @@
     justify-content: center;
   }
 
-  /* Section responsive */
   .section {
     padding: 1.5rem;
     margin-bottom: 1rem;
@@ -538,7 +533,6 @@
     padding: 1rem;
   }
 
-  /* Edit field responsive */
   .editField {
     flex-direction: column;
     align-items: stretch;
@@ -566,7 +560,6 @@
     gap: 0.5rem;
   }
 
-  /* Modal responsive */
   .modalContent {
     width: 95%;
     padding: 1.5rem;
@@ -613,7 +606,6 @@
     font-size: 1rem;
   }
 
-  /* Section mobile */
   .section {
     padding: 1rem;
     border-radius: 0.75rem;
@@ -647,7 +639,6 @@
     min-height: 100px;
   }
 
-  /* Editable info mobile */
   .editableInfo {
     gap: 0.5rem;
   }
@@ -669,7 +660,6 @@
     font-size: 0.9rem;
   }
 
-  /* Modal mobile */
   .modalContent {
     padding: 1rem;
     max-height: 85vh;
@@ -713,14 +703,12 @@
   }
 }
 
-/* Accessibility improvements */
 .primaryBtn:focus,
 .secondaryBtn:focus {
   outline: 3px solid var(--color-secondary);
   outline-offset: 2px;
 }
 
-/* Animation utilities */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -736,7 +724,6 @@
   animation: fadeIn 0.6s ease-out;
 }
 
-/* Editable Info Styles */
 .editableInfo {
   display: flex;
   align-items: center;
@@ -769,7 +756,6 @@
   border-color: var(--color-primary);
 }
 
-/* Edit Field Styles */
 .editField {
   display: flex;
   align-items: center;
@@ -847,14 +833,12 @@
   border-color: #ef4444;
 }
 
-/* Participants Styles */
 .participantCount {
   color: var(--color-text);
   font-size: 1.1rem;
   font-weight: 500;
 }
 
-/* Participants Modal */
 .participantsModal {
   position: fixed;
   top: 0;
@@ -1037,7 +1021,6 @@
   transform: translateY(-2px);
 }
 
-/* Section Styles */
 .section {
   background: var(--color-white);
   border-radius: 1.5rem;
@@ -1095,14 +1078,12 @@
   transform: scale(1.05);
 }
 
-/* Section Actions Container */
 .sectionActions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-/* AI Header Button */
 .aiHeaderBtn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
@@ -1254,7 +1235,6 @@
   border-color: var(--color-primary);
 }
 
-/* AI Recommendation Styles */
 .aiSection {
   margin: 1rem 0;
 }
@@ -1290,7 +1270,6 @@
   animation: spin 1s linear infinite;
 }
 
-/* Loading Recommendations */
 .loadingRecommendations {
   display: flex;
   flex-direction: column;
@@ -1405,7 +1384,6 @@
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-/* Destinations Grid */
 .destinationsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));

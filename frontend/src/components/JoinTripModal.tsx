@@ -26,7 +26,6 @@ export function JoinTripModal({ isOpen, onClose, onSuccess }: JoinTripModalProps
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      // Primero buscar la invitación por código
       const findResponse = await axios.get(
         `http://localhost:3000/invitations/find-by-code/${code}`,
         {
@@ -36,7 +35,6 @@ export function JoinTripModal({ isOpen, onClose, onSuccess }: JoinTripModalProps
 
       const invitationToken = findResponse.data.token;
 
-      // Luego aceptar la invitación usando el token
       const response = await axios.post(
         `http://localhost:3000/invitations/join/${invitationToken}/accept`,
         {},
@@ -50,7 +48,6 @@ export function JoinTripModal({ isOpen, onClose, onSuccess }: JoinTripModalProps
       onClose();
       setCode("");
       
-      // Navegar al viaje
       if (response.data.trip?.id) {
         navigate(`/trips/${response.data.trip.id}`);
       }

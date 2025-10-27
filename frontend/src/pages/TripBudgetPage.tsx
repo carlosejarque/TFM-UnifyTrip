@@ -10,6 +10,7 @@ import {
   Users,
   Euro,
   TrendingUp,
+  TrendingDown,
   X,
 } from "lucide-react";
 
@@ -27,7 +28,7 @@ type Expense = {
   category: string;
   date: string;
   trip_id: number;
-  participants: string[]; // usernames of participants who should split this expense
+  participants: string[];
 };
 
 type ExpenseFormData = {
@@ -38,25 +39,23 @@ type ExpenseFormData = {
   participants: string[];
 };
 
-// TODO: Descomentar cuando se implemente la funcionalidad de balances
-// type Balance = {
-//   username: string;
-//   balance: number; // positive = should receive money, negative = owes money
-// };
+type Balance = {
+  username: string;
+  balance: number;
+};
 
-// type Settlement = {
-//   from: string;
-//   to: string;
-//   amount: number;
-// };
+type Settlement = {
+  from: string;
+  to: string;
+  amount: number;
+};
 
 export function TripBudgetPage() {
   const { id } = useParams<{ id: string }>();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  // TODO: Descomentar cuando se implemente la funcionalidad de balances
-  // const [balances, setBalances] = useState<Balance[]>([]);
-  // const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const [balances, setBalances] = useState<Balance[]>([]);
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,7 +111,6 @@ export function TripBudgetPage() {
 
         for (const participant of participantsResponse.data) {
           try {
-
             const userResponse = await axios.get(
               `http://localhost:3000/users/${participant.user_id}`,
               { headers: { Authorization: `Bearer ${token}` } }
@@ -127,11 +125,6 @@ export function TripBudgetPage() {
               trip_id: participant.trip_id,
             });
           } catch (userError) {
-            console.error(
-              `❌ Error al obtener información del usuario ${participant.user_id}:`,
-              userError
-            );
-
             participantsWithUserInfo.push({
               id: participant.user_id,
               username: `Usuario${participant.user_id}`,
@@ -143,7 +136,6 @@ export function TripBudgetPage() {
         setParticipants(participantsWithUserInfo);
 
         try {
-
           const expensesResponse = await axios.get(
             `http://localhost:3000/expenses/trip/${id}`,
             { headers: { Authorization: `Bearer ${token}` } }
@@ -187,6 +179,28 @@ export function TripBudgetPage() {
             );
 
             setExpenses(processedExpenses);
+            
+            try {
+              const personalExpenseResponse = await axios.get(
+                `http://localhost:3000/expense-participants/personal`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+
+              const currentTripExpenseIds = processedExpenses.map((expense: Expense) => expense.id);
+              const filteredPersonalExpenses = personalExpenseResponse.data.filter(
+                (item: {expense_id: number; share_amount: string}) => currentTripExpenseIds.includes(item.expense_id)
+              );
+
+              const totalPersonalExpense = filteredPersonalExpenses.reduce(
+                (total: number, item: {expense_id: number; share_amount: string}) =>
+                  total + parseFloat(item.share_amount || '0'),
+                0
+              );
+
+              setPersonalExpense(totalPersonalExpense);
+            } catch {
+              setPersonalExpense(0);
+            }
           } else if (expensesResponse.data.message === "No expenses found") {
             setExpenses([]);
           } else {
@@ -203,30 +217,12 @@ export function TripBudgetPage() {
           toast.error("❌ Error al cargar los gastos del viaje");
         }
 
-        try {
-          const personalExpenseResponse = await axios.get(
-            `http://localhost:3000/expense-participants/personal`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          const totalPersonalExpense = personalExpenseResponse.data.reduce(
-            (total: number, item: any) =>
-              total + parseFloat(item.share_amount || 0),
-            0
-          );
-
-          setPersonalExpense(totalPersonalExpense);
-        } catch (personalExpenseError) {
-          setPersonalExpense(0);
-        }
-
         setLoading(false);
-      } catch (participantsError) {
-
+      } catch {
         setExpenses([]);
         setLoading(false);
       }
-    } catch (err) {
+    } catch {
       setError("No se pudieron cargar los datos.");
       setLoading(false);
     }
@@ -252,7 +248,7 @@ export function TripBudgetPage() {
     });
   };
 
-  const handleApiError = (error: any, action: string) => {
+  const handleApiError = (error: unknown, action: string) => {
     if (axios.isAxiosError(error) && error.response) {
       console.error("📄 Response data:", error.response.data);
       console.error("📊 Response status:", error.response.status);
@@ -284,15 +280,104 @@ export function TripBudgetPage() {
     };
   };
 
-  // TODO: Implementar cálculo de balances y liquidaciones
-  // const calculateBalancesAndSettlements = () => {
-  //   // Aquí iría la lógica para calcular balances y liquidaciones
-  //   // basándose en expenses y participants
-  // };
+  const calculateBalancesAndSettlements = useCallback(() => {
+    if (participants.length === 0 || expenses.length === 0) {
+      setBalances([]);
+      setSettlements([]);
+      return;
+    }
+
+    const paidByUser: { [username: string]: number } = {};
+    participants.forEach(participant => {
+      paidByUser[participant.username] = 0;
+    });
+
+    expenses.forEach(expense => {
+      if (expense.paid_by in paidByUser) {
+        paidByUser[expense.paid_by] += expense.amount;
+      }
+    });
+
+    const shouldPay: { [username: string]: number } = {};
+    participants.forEach(participant => {
+      shouldPay[participant.username] = 0;
+    });
+
+    expenses.forEach(expense => {
+      const sharePerPerson = expense.amount / expense.participants.length;
+      expense.participants.forEach(participantUsername => {
+        if (participantUsername in shouldPay) {
+          shouldPay[participantUsername] += sharePerPerson;
+        }
+      });
+    });
+
+    const calculatedBalances: Balance[] = participants.map(participant => {
+      const balance = paidByUser[participant.username] - shouldPay[participant.username];
+      
+      return {
+        username: participant.username,
+        balance: balance
+      };
+    });
+    
+    const sortedBalances = calculatedBalances.sort((a, b) => b.balance - a.balance);
+    
+    setBalances(sortedBalances);
+
+    const debtors = sortedBalances
+      .filter(b => b.balance < 0)
+      .map(b => ({ ...b }));
+    const creditors = sortedBalances
+      .filter(b => b.balance > 0)
+      .map(b => ({ ...b }));
+    const calculatedSettlements: Settlement[] = [];
+
+    const debtorsCopy = [...debtors];
+    const creditorsCopy = [...creditors];
+
+    while (debtorsCopy.length > 0 && creditorsCopy.length > 0) {
+      const debtor = debtorsCopy[0];
+      const creditor = creditorsCopy[0];
+
+      const debtAmount = Math.abs(debtor.balance);
+      const creditAmount = creditor.balance;
+
+      if (debtAmount <= creditAmount) {
+        calculatedSettlements.push({
+          from: debtor.username,
+          to: creditor.username,
+          amount: debtAmount
+        });
+
+        creditor.balance -= debtAmount;
+        debtorsCopy.shift();
+        
+        if (creditor.balance === 0) {
+          creditorsCopy.shift();
+        }
+      } else {
+        calculatedSettlements.push({
+          from: debtor.username,
+          to: creditor.username,
+          amount: creditAmount
+        });
+
+        debtor.balance += creditAmount;
+        creditorsCopy.shift();
+      }
+    }
+
+    setSettlements(calculatedSettlements);
+  }, [participants, expenses]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    calculateBalancesAndSettlements();
+  }, [calculateBalancesAndSettlements]);
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -350,19 +435,15 @@ export function TripBudgetPage() {
             return;
           }
 
-          try {
-            await axios.post(
-              `http://localhost:3000/expense-participants/`,
-              {
-                expense_id: expenseId,
-                user_id: participant.id,
-                share_amount: shareAmount,
-              },
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-          } catch (participantError) {
-            throw participantError;
-          }
+          await axios.post(
+            `http://localhost:3000/expense-participants/`,
+            {
+              expense_id: expenseId,
+              user_id: participant.id,
+              share_amount: shareAmount,
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
         }
       );
 
@@ -396,9 +477,11 @@ export function TripBudgetPage() {
           `http://localhost:3000/expense-participants/expense/${expenseToDelete.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        } catch {
-          // Continue with expense deletion even if this fails
-        }      await axios.delete(
+      } catch {
+        // Continue with expense deletion even if this fails
+      }
+      
+      await axios.delete(
         `http://localhost:3000/expenses/${expenseToDelete.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -481,7 +564,6 @@ export function TripBudgetPage() {
         `✏️ Gasto "${editFormData.description}" actualizado correctamente`
       );
 
-      // Llamada a la API para actualizar
       const token = localStorage.getItem("token");
       await axios.put(
         `http://localhost:3000/expenses/${editingExpense.id}`,
@@ -491,10 +573,51 @@ export function TripBudgetPage() {
           amount: parseFloat(editFormData.amount),
           paid_by: editFormData.paid_by,
           category: editFormData.category,
-          date: editingExpense.date, // Mantener la fecha original
+          date: editingExpense.date,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      try {
+        await axios.delete(
+          `http://localhost:3000/expense-participants/expense/${editingExpense.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (deleteError) {
+        console.warn("No se pudieron eliminar los participantes anteriores:", deleteError);
+      }
+
+      const shareAmount = parseFloat(editFormData.amount) / editFormData.participants.length;
+
+      const participantPromises = editFormData.participants.map(
+        async (participantUsername) => {
+          const participant = participants.find(
+            (p) => p.username === participantUsername
+          );
+
+          if (!participant) {
+            console.warn(`Participante no encontrado: ${participantUsername}`);
+            return;
+          }
+
+          try {
+            await axios.post(
+              `http://localhost:3000/expense-participants/`,
+              {
+                expense_id: editingExpense.id,
+                user_id: participant.id,
+                share_amount: shareAmount,
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          } catch (participantError) {
+            console.error(`Error al añadir participante ${participantUsername}:`, participantError);
+            throw participantError;
+          }
+        }
+      );
+
+      await Promise.all(participantPromises);
 
       fetchData(); // Refresh data from server
     } catch (err) {
@@ -631,43 +754,39 @@ export function TripBudgetPage() {
           )}
         </div>
 
-        {/* TODO: Descomentar cuando se implemente calculateBalancesAndSettlements */}
         {/* Balances */}
-        {/*
         <div className={styles.section}>
           <h3>Balances</h3>
           <div className={styles.balancesList}>
-            {(() => {
-              console.log("🖥️ Renderizando balances en UI:", balances);
-              return balances.map((balance) => {
-                console.log(`🖥️ Renderizando balance: ${balance.username} = €${balance.balance}`);
-                return (
-                  <div key={balance.username} className={styles.balanceItem}>
-                    <span className={styles.username}>{balance.username}</span>
-                    <span 
-                      className={`${styles.balanceAmount} ${
-                        balance.balance > 0 ? styles.positive : 
-                        balance.balance < 0 ? styles.negative : styles.neutral
-                      }`}
-                    >
-                      {balance.balance > 0 && <TrendingUp size={16} />}
-                      {balance.balance < 0 && <TrendingDown size={16} />}
-                      €{Math.abs(balance.balance).toFixed(2)}
-                      {balance.balance > 0 && " (a recibir)"}
-                      {balance.balance < 0 && " (debe)"}
-                      {balance.balance === 0 && " (equilibrado)"}
-                    </span>
-                  </div>
-                );
-              });
-            })()}
+            {balances.map((balance) => {
+              return (
+                <div key={balance.username} className={styles.balanceItem}>
+                  <span className={styles.username}>{balance.username}</span>
+                  <span 
+                    className={`${styles.balanceAmount} ${
+                      balance.balance > 0 ? styles.positive : 
+                      balance.balance < 0 ? styles.negative : styles.neutral
+                    }`}
+                  >
+                    {balance.balance > 0 && <TrendingUp size={16} />}
+                    {balance.balance < 0 && <TrendingDown size={16} />}
+                    {balance.balance === 0 
+                      ? "€0.00" 
+                      : balance.balance > 0 
+                        ? `+€${balance.balance.toFixed(2)}` 
+                        : `-€${Math.abs(balance.balance).toFixed(2)}`
+                    }
+                    {balance.balance > 0 && " (a recibir)"}
+                    {balance.balance < 0 && " (debe)"}
+                    {balance.balance === 0 && " (equilibrado)"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
-        */}
 
-        {/* TODO: Descomentar cuando se implemente calculateBalancesAndSettlements */}
         {/* Settlements */}
-        {/*
         {settlements.length > 0 && (
           <div className={styles.section}>
             <h3>Liquidaciones Sugeridas</h3>
@@ -684,7 +803,6 @@ export function TripBudgetPage() {
             </div>
           </div>
         )}
-        */}
 
         {/* Categories Breakdown */}
         {expenses.length > 0 && (

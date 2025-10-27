@@ -39,7 +39,7 @@ type Activity = {
   end_date: string; // ISO string - coincide con el backend
   created_by: number;
   location?: string | null;
-  generatedByAI?: boolean; // Campo para identificar actividades generadas por IA
+  generatedByAI?: boolean;
 };
 
 export function TripItineraryPage() {
@@ -54,9 +54,7 @@ export function TripItineraryPage() {
   const [users, setUsers] = useState<{[key: number]: string}>({});
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
 
-  // Función para obtener información del usuario
   const fetchUserName = async (userId: number): Promise<string> => {
-    // Verificar si userId es válido
     if (!userId || userId === null || userId === undefined) {
       return 'Usuario desconocido';
     }
@@ -79,8 +77,6 @@ export function TripItineraryPage() {
     }
   };
 
-  // Función para obtener el texto del creador de la actividad
-  // Componente para mostrar la etiqueta del creador
   const ActivityCreatorLabel = ({ activity }: { activity: Activity }) => {
     const [creatorText, setCreatorText] = useState<string>('');
 
@@ -322,7 +318,6 @@ export function TripItineraryPage() {
         return;
       }
 
-      // Construir fechas en formato ISO local (sin conversión UTC)
       const startDate = activityFormData.start_datetime
         ? activityFormData.start_datetime + ":00"
         : null;
@@ -340,14 +335,13 @@ export function TripItineraryPage() {
           start_date: startDate,
           end_date: endDate,
           location: activityFormData.location || null,
-          generatedByAI: false, // Marcar como creada manualmente
+          generatedByAI: false,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      // Recargar las actividades desde la BD para asegurar consistencia
       await reloadActivities();
 
       resetActivityForm();
@@ -374,7 +368,6 @@ export function TripItineraryPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Recargar las actividades desde la BD para asegurar consistencia
       await reloadActivities();
       toast.success("Actividad eliminada exitosamente");
     } catch (error) {
@@ -391,12 +384,10 @@ export function TripItineraryPage() {
     setEditingActivity(null);
   };
 
-  // Función para extraer la fecha local de un string ISO
   const getLocalDateFromISO = (isoString: string): string => {
     return isoString.split('T')[0];
   };
 
-  // Función para extraer la hora local de un string ISO
   const getLocalTimeFromISO = (isoString: string): string => {
     return isoString.split('T')[1]?.slice(0, 5) || "";
   };
@@ -423,7 +414,6 @@ export function TripItineraryPage() {
         return;
       }
 
-      // Construir las fechas ISO en hora local (sin Z para evitar conversión UTC)
       const startDate = startTime 
         ? `${date}T${startTime}:00`
         : `${date}T00:00:00`;
@@ -461,7 +451,6 @@ export function TripItineraryPage() {
     }
   };
 
-  // Función para recargar las actividades desde la BD
   const reloadActivities = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -520,11 +509,9 @@ export function TripItineraryPage() {
           throw new Error("Respuesta inválida del servidor");
         }
 
-        // Convertir las actividades de IA al formato de la base de datos
         const newActivities = await Promise.all(
           aiActivities.map(async (aiActivity) => {
             try {
-              // Crear la actividad en la base de datos
               const activityResponse = await axios.post(
                 'http://localhost:3000/activities',
                 {
@@ -532,10 +519,10 @@ export function TripItineraryPage() {
                   itinerary_id: itinerary?.id || 0,
                   name: aiActivity.name,
                   description: aiActivity.description,
-                  start_date: aiActivity.startdate, // formato YYYY-MM-DDTHH:MM
-                  end_date: aiActivity.enddate,     // formato YYYY-MM-DDTHH:MM
+                  start_date: aiActivity.startdate,
+                  end_date: aiActivity.enddate,
                   location: aiActivity.location || null,
-                  generatedByAI: true, // Marcar como generada por IA
+                  generatedByAI: true,
                 },
                 {
                   headers: { Authorization: `Bearer ${token}` },
@@ -544,17 +531,13 @@ export function TripItineraryPage() {
               return activityResponse.data;
             } catch (error) {
               console.error('Error creando actividad:', error);
-              // Si falla crear una actividad específica, continuamos con las demás
               return null;
             }
           })
         );
 
-        // Filtrar actividades que se crearon exitosamente
         const validActivities = newActivities.filter(activity => activity !== null);
         
-        // En lugar de actualizar el estado local con datos parciales,
-        // recargamos todas las actividades desde la BD para asegurar consistencia
         await reloadActivities();
 
         return { activitiesCount: validActivities.length };
@@ -866,7 +849,6 @@ export function TripItineraryPage() {
         </div>
       ))}
 
-      {/* Dialog de edición */}
       <Dialog.Root open={!!editingActivity} onOpenChange={(open) => !open && cancelEdit()}>
         <Dialog.Portal>
           <Dialog.Overlay className={styles.dialogOverlay} />

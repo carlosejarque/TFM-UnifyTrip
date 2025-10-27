@@ -7,7 +7,6 @@ export function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
-        {/* Logo y descripción */}
         <div className={styles.brand}>
           <div className={styles.logo}>
             <MapPin className={styles.logoIcon} size={28} />
@@ -19,7 +18,6 @@ export function Footer() {
           </p>
         </div>
 
-        {/* Links principales */}
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Plataforma</h3>
           <ul className={styles.linksList}>
@@ -29,7 +27,6 @@ export function Footer() {
           </ul>
         </div>
 
-        {/* Funcionalidades */}
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Funcionalidades</h3>
           <ul className={styles.linksList}>
@@ -48,7 +45,6 @@ export function Footer() {
           </ul>
         </div>
 
-        {/* Información legal */}
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Información</h3>
           <ul className={styles.linksList}>
@@ -60,7 +56,6 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Línea divisoria y copyright */}
       <div className={styles.bottom}>
         <div className={styles.container}>
           <div className={styles.copyright}>

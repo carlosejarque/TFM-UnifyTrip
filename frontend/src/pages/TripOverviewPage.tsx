@@ -54,7 +54,6 @@ export function TripOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados para edición
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDestination, setIsEditingDestination] = useState(false);
   const [isEditingDates, setIsEditingDates] = useState(false);
@@ -65,13 +64,11 @@ export function TripOverviewPage() {
   const [newEndDate, setNewEndDate] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-  // Estados para recomendaciones de IA
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<AIDestination[]>([]);
   const [showAIModal, setShowAIModal] = useState(false);
 
-  // Función para formatear fechas a DD/MM/YYYY
   const formatDate = (dateString: string): string => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -88,7 +85,6 @@ export function TripOverviewPage() {
         setError(null);
         const token = localStorage.getItem("token");
 
-        // Cargar datos del viaje
         const tripResponse = await axios.get(
           `http://localhost:3000/trips/${id}`,
           {
@@ -109,7 +105,6 @@ export function TripOverviewPage() {
           }
         );
         
-        // Obtener datos completos de cada participante
         const participantIds = tripParticipants.data.map((tp: { user_id: number }) => tp.user_id);
         const participantsData = await Promise.all(
           participantIds.map(async (userId: number) => {
@@ -124,9 +119,8 @@ export function TripOverviewPage() {
         );
         
         setParticipants(participantsData);
-      } catch (err) {
+      } catch {
         setError("No se pudo cargar el viaje.");
-        console.error(err);
         setTrip(null);
       } finally {
         setLoading(false);
@@ -135,12 +129,10 @@ export function TripOverviewPage() {
     fetchTrip();
   }, [id]);
 
-  // Función para obtener recomendaciones de IA
   const getDestinationRecommendations = async () => {
     setShowAIModal(true);
   };
 
-  // Función para manejar las preferencias de IA
   const handleAIPreferences = async (preferences: {
     startDate: string;
     endDate: string;
@@ -154,7 +146,6 @@ export function TripOverviewPage() {
     interests: string[];
     additionalInfo: string;
   }) => {
-    console.log("Preferencias de IA:", preferences);
     setIsLoadingRecommendations(true);
     setShowAIModal(false);
     
@@ -168,21 +159,13 @@ export function TripOverviewPage() {
         }
       );
       
-      // El backend devuelve destinos en formato JSON
-      console.log("Respuesta completa de ChatGPT:", response.data);
-      
       if (response.data.success && response.data.data.destinations) {
-        console.log("Destinos recomendados:", response.data.data.destinations);
         setRecommendations(response.data.data.destinations);
       } else {
-        console.log("No se encontraron destinos en la respuesta");
         setRecommendations([]);
       }
       setShowRecommendations(true);
-    } catch (error) {
-      console.error("Error obteniendo recomendaciones de IA:", error);
-      // En caso de error, no mostrar recomendaciones
-      console.error("Error detallado:", axios.isAxiosError(error) ? error.response?.data : error);
+    } catch {
       setRecommendations([]);
       setShowRecommendations(true);
     } finally {
@@ -190,7 +173,6 @@ export function TripOverviewPage() {
     }
   };
 
-  // Función para obtener imagen de Unsplash
   const getUnsplashImage = async (destination: string): Promise<string | null> => {
     try {
       const UNSPLASH_ACCESS_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY; 
@@ -204,21 +186,17 @@ export function TripOverviewPage() {
         return response.data.results[0].urls.regular;
       }
       return null;
-    } catch (error) {
-      console.error('Error obteniendo imagen de Unsplash:', error);
+    } catch {
       return null;
     }
   };
 
-  // Funciones para edición
   const handleSaveDestination = async () => {
     try {
       const token = localStorage.getItem("token");
       
-      // Obtener imagen de Unsplash para el nuevo destino
       const newImageUrl = await getUnsplashImage(newDestination);
       
-      // Preparar los datos a actualizar
       const updateData: {
         title?: string;
         destination: string;
@@ -228,7 +206,6 @@ export function TripOverviewPage() {
         destination: newDestination
       };
       
-      // Añadir la imagen si se obtuvo una de Unsplash
       if (newImageUrl) {
         updateData.image_url = newImageUrl;
       }
@@ -247,8 +224,8 @@ export function TripOverviewPage() {
         } : null
       );
       setIsEditingDestination(false);
-    } catch (err) {
-      console.error("Error updating destination:", err);
+    } catch {
+      return;
     }
   };
 
@@ -270,8 +247,8 @@ export function TripOverviewPage() {
           : null
       );
       setIsEditingDates(false);
-    } catch (err) {
-      console.error("Error updating dates:", err);
+    } catch {
+      return;
     }
   };
 
@@ -287,8 +264,8 @@ export function TripOverviewPage() {
         prev ? { ...prev, title: newTitle } : null
       );
       setIsEditingTitle(false);
-    } catch (err) {
-      console.error("Error updating title:", err);
+    } catch {
+      return;
     }
   };
 
@@ -304,8 +281,8 @@ export function TripOverviewPage() {
         prev ? { ...prev, description: newDescription } : null
       );
       setIsEditingDescription(false);
-    } catch (err) {
-      console.error("Error updating description:", err);
+    } catch {
+      return;
     }
   };
 
@@ -433,7 +410,6 @@ export function TripOverviewPage() {
         </div>
       </div>
 
-      {/* Sección de Destino */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
@@ -507,7 +483,6 @@ export function TripOverviewPage() {
           </div>
         )}
 
-        {/* Mostrar indicador de carga */}
         {isLoadingRecommendations && (
           <div className={styles.recommendationsContainer}>
             <div className={styles.loadingRecommendations}>
@@ -525,7 +500,6 @@ export function TripOverviewPage() {
           </div>
         )}
 
-        {/* Mostrar recomendaciones */}
         {showRecommendations && recommendations.length > 0 && !isLoadingRecommendations && (
           <div className={styles.recommendationsContainer}>
             <div className={styles.recommendationsHeader}>
@@ -603,7 +577,6 @@ export function TripOverviewPage() {
         )}
       </div>
 
-      {/* Sección de Descripción */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
@@ -663,7 +636,6 @@ export function TripOverviewPage() {
         )}
       </div>
 
-      {/* Sección de Fechas */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
@@ -735,7 +707,6 @@ export function TripOverviewPage() {
         )}
       </div>
 
-      {/* Modal de preferencias de IA */}
       <AIPreferencesModal
         isOpen={showAIModal}
         onClose={() => setShowAIModal(false)}

@@ -53,12 +53,17 @@ export function NewTripPage() {
 
   const step1Valid = form.title;
 
-  // Función helper para convertir Date a string en formato YYYY-MM-DD en zona horaria local
   const formatDateToLocal = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  const formatDateForDisplay = (dateString: string): string => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
   };
 
   const handleNextFromDates = () => {
@@ -134,7 +139,7 @@ export function NewTripPage() {
             </div>
             
             <label>
-              Nombre del viaje
+              Nombre del viaje *
               <input
                 type="text"
                 value={form.title}
@@ -151,7 +156,6 @@ export function NewTripPage() {
                 onChange={(e) => handleChange("description", e.target.value)}
                 placeholder="Describe el viaje, actividades previstas, experiencias que esperas vivir..."
                 rows={4}
-                required
               />
             </label>
             
@@ -247,7 +251,6 @@ export function NewTripPage() {
                 value={form.destination}
                 onChange={(e) => handleChange("destination", e.target.value)}
                 placeholder="Ej: París, Francia"
-                required
               />
             </label>
             
@@ -280,7 +283,7 @@ export function NewTripPage() {
                 </div>
                 {(form.startDate && form.endDate) && (
                   <div className={styles.summaryDates}>
-                    📅 {form.startDate} – {form.endDate}
+                    📅 {formatDateForDisplay(form.startDate)} – {formatDateForDisplay(form.endDate)}
                   </div>
                 )}
                 {form.destination && (
@@ -346,7 +349,7 @@ export function NewTripPage() {
                       await axios.post(
                         `http://localhost:3000/trip-participants`,
                         { 
-                          trip_id: tripId 
+                          trip_id: tripId
                         },
                         {
                           headers: {
@@ -358,7 +361,6 @@ export function NewTripPage() {
 
                     toast.success("¡Viaje creado correctamente! Redirigiendo a los detalles...");
                     
-                    // Redireccionar a la página de detalles del viaje después de 2 segundos
                     setTimeout(() => {
                       navigate(`/trips/${tripId}`);
                     }, 2000);

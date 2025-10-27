@@ -1,4 +1,3 @@
-/* Modal Overlay */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -14,7 +13,6 @@
   padding: 1rem;
 }
 
-/* Modal Content */
 .modalContent {
   background: white;
   border-radius: 16px;
@@ -35,7 +33,6 @@
   }
 }
 
-/* Modal Header */
 .modalHeader {
   display: flex;
   justify-content: space-between;
@@ -87,12 +84,10 @@
   color: #1f2937;
 }
 
-/* Modal Body */
 .modalBody {
   padding: 1.5rem;
 }
 
-/* Input Section */
 .inputSection {
   margin-bottom: 1.5rem;
 }
@@ -144,7 +139,6 @@
   text-align: center;
 }
 
-/* Join Button */
 .joinButton {
   width: 100%;
   padding: 0.875rem 1.5rem;
@@ -189,7 +183,6 @@
   }
 }
 
-/* Responsive */
 @media (max-width: 640px) {
   .modalContent {
     max-width: 95%;

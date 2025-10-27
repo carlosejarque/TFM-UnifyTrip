@@ -26,7 +26,6 @@ export const Navbar = () => {
   };
 
   const handleProfileClick = () => {
-    // Navegar a la página de perfil (asumo que existe o se creará)
     navigate("/profile");
   };
 
@@ -89,7 +88,6 @@ export const Navbar = () => {
         )}
       </div>
 
-      {/* Dialog de confirmación para cerrar sesión */}
       <Dialog.Root open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
         <Dialog.Portal>
           <Dialog.Overlay className={styles.dialogOverlay} />

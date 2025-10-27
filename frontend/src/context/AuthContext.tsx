@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
 
-   // Función para decodificar JWT token (sin verificación, solo para obtener payload)
   const decodeToken = useCallback((token: string): User | null => {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -45,18 +44,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, []);
 
-  // Función para obtener información del usuario actual
   const fetchUserInfo = useCallback(async (): Promise<User | null> => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return null;
 
-      // Tu backend tiene el endpoint /users/profile, así que lo usamos
       const response = await axios.get('http://localhost:3000/users/profile');
       return response.data;
     } catch (error) {
       console.error('Error fetching user info from API, using token decode as fallback:', error);
-      // Fallback: decodificar el token si la API falla
       const token = localStorage.getItem('token');
       if (token) {
         return decodeToken(token);
@@ -65,7 +61,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [decodeToken]);
 
-  // Función para renovar el access token usando el refresh token
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
@@ -82,14 +77,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return true;
     } catch (error) {
       console.error('Error refreshing token:', error);
-      // Si el refresh token también ha expirado, hacer logout
       logout();
       return false;
     }
   }, []);
 
   useEffect(() => {
-    // Configurar interceptor de axios para manejar tokens automáticamente PRIMERO
     const requestInterceptor = axios.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem('token');
@@ -106,13 +99,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       async (error) => {
         const originalRequest = error.config;
 
-        // Si recibimos un 401 y no hemos intentado renovar el token aún
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
           const refreshSuccess = await refreshAccessToken();
           if (refreshSuccess) {
-            // Reintentar la petición original con el nuevo token
             const token = localStorage.getItem('token');
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return axios(originalRequest);
@@ -123,11 +114,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // DESPUÉS configurar el estado de autenticación
     const token = localStorage.getItem('token');
     if (token) {
       setIsAuthenticated(true);
-      // Obtener información del usuario con un pequeño delay para asegurar que el interceptor esté listo
       setTimeout(() => {
         fetchUserInfo().then(userInfo => {
           if (userInfo) {
@@ -137,7 +126,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }, 100);
     }
 
-    // Cleanup interceptors cuando el componente se desmonte
     return () => {
       axios.interceptors.request.eject(requestInterceptor);
       axios.interceptors.response.eject(responseInterceptor);
@@ -149,7 +137,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.setItem('refreshToken', refreshToken);
     setIsAuthenticated(true);
     
-    // Obtener información del usuario después del login
     const userInfo = await fetchUserInfo();
     if (userInfo) {
       setUser(userInfo);
