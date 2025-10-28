@@ -35,7 +35,7 @@ exports.getExpensesByTripId = async (req, res) => {
 exports.getExpensesByUserId = async (req, res) => {
   let { user_id } = req.params;
   if (!user_id) {
-    user_id = req.user.id;
+    user_id = req.user.userId;
   }
   const expenses = await Expense.findAll({ where: { user_id } });
   if (expenses.length > 0) {

@@ -6,7 +6,8 @@ const {
   createPollOption,
   updatePollOption,
   deletePollOption,
-  getPollOptionByPollId
+  getPollOptionByPollId,
+  deletePollOptionsByPollId
 } = require("../controllers/pollOptionsController");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { validateBody } = require("../middlewares/validateBody");
@@ -18,5 +19,6 @@ router.get("/poll/:poll_id", getPollOptionByPollId);
 router.post("/", authMiddleware, validateBody(pollOptionSchema), createPollOption);
 router.put("/:id", authMiddleware, validateBody(pollOptionSchema), updatePollOption);
 router.delete("/:id", authMiddleware, deletePollOption);
+router.delete("/poll/:poll_id", authMiddleware, deletePollOptionsByPollId);
 
 module.exports = router;

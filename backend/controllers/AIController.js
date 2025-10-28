@@ -1,7 +1,5 @@
-
 const OpenAI = require('openai');
 
-// Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
@@ -10,7 +8,6 @@ exports.recommendDestinations = async (req, res) => {
   try {
     const preferences = req.body;
     
-    // Construct the prompt with user preferences
     const prompt = `Eres un asesor experto en viajes personalizados. Tu tarea es recomendar varios destinos de viaje ideales según los datos proporcionados.
 Contexto: El usuario busca opciones de viaje adaptadas a sus preferencias de clima, presupuesto, estilo de viaje, intereses y otras variables. El país de referencia para calcular la distancia es **España**.
 Tono/estilo: profesional, informativo y entusiasta.
@@ -54,7 +51,6 @@ Formato de la respuesta:
   ]
 }`;
 
-    // Make API call to ChatGPT
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -68,15 +64,11 @@ Formato de la respuesta:
     });
 
     const recommendationsText = completion.choices[0].message.content;
-    console.log('Raw ChatGPT response:', recommendationsText);
     
-    // Function to extract and clean JSON from the response
     const extractJSON = (text) => {
       try {
-        // First, try to parse directly
         return JSON.parse(text);
       } catch (e) {
-        // If direct parsing fails, try to extract JSON from text
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           try {
@@ -89,20 +81,15 @@ Formato de la respuesta:
       }
     };
     
-    // Parse the JSON response from ChatGPT
     let recommendationsJson;
     try {
       recommendationsJson = extractJSON(recommendationsText);
-      console.log('Parsed JSON:', recommendationsJson);
       
-      // Validate the structure
       if (!recommendationsJson.destinations || !Array.isArray(recommendationsJson.destinations)) {
         throw new Error('Invalid JSON structure: missing or invalid destinations array');
       }
       
     } catch (parseError) {
-      console.error('Error parsing ChatGPT JSON response:', parseError);
-      console.error('Raw response was:', recommendationsText);
       return res.status(500).json({
         success: false,
         error: 'Error parsing AI response format',
@@ -123,8 +110,6 @@ Formato de la respuesta:
     });
 
   } catch (error) {
-    console.error('Error calling ChatGPT API:', error);
-    
     if (error.code === 'insufficient_quota') {
       return res.status(402).json({
         success: false,
@@ -146,13 +131,11 @@ Formato de la respuesta:
   }
 }
 
-
 exports.generateItinerayWithAI = async (req, res) => {
   try {
     const { destination, startDate, endDate } = req.body;
     
-    // Construct the prompt with user data
-    const prompt = `Actúas como un planificador de viajes profesional especializado en crear itinerarios turísticos inteligentes y realistas. Tu tarea es generar un itinerario diario en formato JSON, adaptado al destino y a las fechas proporcionadas.
+    const prompt = `Actúas como un planificador de viajes profesional especializado en crear itinerarios turísticos inteligentes y realistas. Tu tarea es generar un itinerio diario en formato JSON, adaptado al destino y a las fechas proporcionadas.
 
 Contexto: El usuario te proporcionará:
 
@@ -197,7 +180,6 @@ Una lista JSON con todas las actividades del viaje. Ejemplo:
   }
 ]`;
 
-    // Make API call to ChatGPT
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -211,15 +193,11 @@ Una lista JSON con todas las actividades del viaje. Ejemplo:
     });
 
     const itineraryText = completion.choices[0].message.content;
-    console.log('Raw ChatGPT itinerary response:', itineraryText);
     
-    // Function to extract and clean JSON from the response
     const extractJSON = (text) => {
       try {
-        // First, try to parse directly
         return JSON.parse(text);
       } catch (e) {
-        // If direct parsing fails, try to extract JSON array from text
         const jsonMatch = text.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           try {
@@ -232,18 +210,14 @@ Una lista JSON con todas las actividades del viaje. Ejemplo:
       }
     };
     
-    // Parse the JSON response from ChatGPT
     let itineraryJson;
     try {
       itineraryJson = extractJSON(itineraryText);
-      console.log('Parsed itinerary JSON:', itineraryJson);
       
-      // Validate the structure
       if (!Array.isArray(itineraryJson)) {
         throw new Error('Invalid JSON structure: response should be an array of activities');
       }
       
-      // Validate each activity has required fields
       for (let i = 0; i < itineraryJson.length; i++) {
         const activity = itineraryJson[i];
         if (!activity.name || !activity.description || !activity.startdate || !activity.enddate) {
@@ -252,8 +226,6 @@ Una lista JSON con todas las actividades del viaje. Ejemplo:
       }
       
     } catch (parseError) {
-      console.error('Error parsing ChatGPT itinerary JSON response:', parseError);
-      console.error('Raw response was:', itineraryText);
       return res.status(500).json({
         success: false,
         error: 'Error parsing AI itinerary response format',
@@ -276,8 +248,6 @@ Una lista JSON con todas las actividades del viaje. Ejemplo:
     });
 
   } catch (error) {
-    console.error('Error calling ChatGPT API for itinerary:', error);
-    
     if (error.code === 'insufficient_quota') {
       return res.status(402).json({
         success: false,

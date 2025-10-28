@@ -13,12 +13,10 @@ const generateLinkToken = () => {
   return token;
 };
 
-// Generar código corto de 6 dígitos
 const generateSixDigitCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Verificar que el token sea único
 const generateUniqueToken = async () => {
   let token;
   let exists = true;
@@ -32,7 +30,6 @@ const generateUniqueToken = async () => {
   return token;
 };
 
-// Verificar que el código sea único
 const generateUniqueCode = async () => {
   let code;
   let exists = true;
@@ -46,15 +43,12 @@ const generateUniqueCode = async () => {
   return code;
 };
 
-// Verificar si el usuario tiene acceso al viaje (es owner o participante)
 const userHasAccessToTrip = async (userId, tripId) => {
   const trip = await Trip.findByPk(tripId);
   if (!trip) return false;
   
-  // Es el owner
   if (trip.owner_id === userId) return true;
   
-  // Es participante
   const participant = await TripParticipant.findOne({
     where: { trip_id: tripId, user_id: userId }
   });
@@ -62,19 +56,16 @@ const userHasAccessToTrip = async (userId, tripId) => {
   return !!participant;
 };
 
-// 1. Obtener o crear enlace de invitación
 exports.getInviteLink = async (req, res) => {
   try {
     const { tripId } = req.params;
     const userId = req.user.userId;
 
-    // Verificar acceso
     const hasAccess = await userHasAccessToTrip(userId, tripId);
     if (!hasAccess) {
       return res.status(403).json({ message: 'No tienes acceso a este viaje' });
     }
 
-    // Buscar enlace activo existente
     let invitation = await Invitation.findOne({
       where: { 
         trip_id: tripId,
@@ -83,11 +74,10 @@ exports.getInviteLink = async (req, res) => {
       }
     });
 
-    // Si no existe, crear uno nuevo
     if (!invitation) {
       const token = await generateUniqueToken();
       const code = await generateUniqueCode();
-      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
       invitation = await Invitation.create({
         trip_id: tripId,
@@ -106,7 +96,6 @@ exports.getInviteLink = async (req, res) => {
       link: `${process.env.FRONTEND_URL}/invitations/join/${invitation.token}`
     });
   } catch (error) {
-    console.error('Error obteniendo enlace:', error);
     res.status(500).json({ message: 'Error al obtener enlace de invitación' });
   }
 };
@@ -116,13 +105,11 @@ exports.generateNewInviteLink = async (req, res) => {
     const { tripId } = req.params;
     const userId = req.user.userId;
 
-    // Verificar acceso
     const hasAccess = await userHasAccessToTrip(userId, tripId);
     if (!hasAccess) {
       return res.status(403).json({ message: 'No tienes acceso a este viaje' });
     }
 
-    // Revocar enlace activo anterior
     await Invitation.update(
       { status: 'revoked' },
       { 
@@ -133,7 +120,6 @@ exports.generateNewInviteLink = async (req, res) => {
       }
     );
 
-    // Crear nuevo enlace
     const token = await generateUniqueToken();
     const code = await generateUniqueCode();
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -154,7 +140,6 @@ exports.generateNewInviteLink = async (req, res) => {
       link: `${process.env.FRONTEND_URL}/invitations/join/${invitation.token}`
     });
   } catch (error) {
-    console.error('Error generando nuevo enlace:', error);
     res.status(500).json({ message: 'Error al generar nuevo enlace' });
   }
 };
@@ -185,12 +170,10 @@ exports.validateInviteToken = async (req, res) => {
       return res.status(404).json({ message: 'Enlace de invitación no válido' });
     }
 
-    // Verificar estado
     if (invitation.status !== 'active') {
       return res.status(400).json({ message: 'Este enlace ha sido revocado' });
     }
 
-    // Verificar expiración
     if (new Date() > new Date(invitation.expires_at)) {
       await invitation.update({ status: 'expired' });
       return res.status(400).json({ message: 'Este enlace ha expirado' });
@@ -201,7 +184,6 @@ exports.validateInviteToken = async (req, res) => {
       trip: invitation.trip
     });
   } catch (error) {
-    console.error('Error validando token:', error);
     res.status(500).json({ message: 'Error al validar invitación' });
   }
 };
@@ -225,7 +207,6 @@ exports.acceptInvitation = async (req, res) => {
       return res.status(400).json({ message: 'La invitación ha expirado' });
     }
 
-    // Verificar si ya es participante
     const existingParticipant = await TripParticipant.findOne({
       where: {
         trip_id: invitation.trip_id,
@@ -237,7 +218,6 @@ exports.acceptInvitation = async (req, res) => {
       return res.status(400).json({ message: 'Ya eres participante de este viaje' });
     }
 
-    // Añadir como participante
     await TripParticipant.create({
       trip_id: invitation.trip_id,
       user_id: userId
@@ -248,7 +228,6 @@ exports.acceptInvitation = async (req, res) => {
       trip: invitation.trip
     });
   } catch (error) {
-    console.error('Error aceptando invitación:', error);
     res.status(500).json({ message: 'Error al aceptar invitación' });
   }
 };
@@ -278,7 +257,6 @@ exports.findInvitationByCode = async (req, res) => {
       tripId: invitation.trip_id
     });
   } catch (error) {
-    console.error('Error buscando invitación por código:', error);
     res.status(500).json({ message: 'Error al buscar invitación' });
   }
 };

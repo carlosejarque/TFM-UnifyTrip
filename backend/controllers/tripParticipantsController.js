@@ -61,7 +61,7 @@ exports.getTripParticipantByMyUserId = async (req, res) => {
 
 exports.createTripParticipant = async (req, res) => {
   const { trip_id } = req.body;
-  const user_id = req.user.id;
+  const user_id = req.user.userId;
   const tripParticipant = await TripParticipant.create({ user_id, trip_id });
   res
     .status(201)
@@ -71,7 +71,7 @@ exports.createTripParticipant = async (req, res) => {
 exports.updateTripParticipant = async (req, res) => {
   const { id } = req.params;
   const { trip_id } = req.body;
-  const user_id = req.user.id;
+  const user_id = req.user.userId;
   const tripParticipant = await TripParticipant.findByPk(id);
 
   if (tripParticipant) {

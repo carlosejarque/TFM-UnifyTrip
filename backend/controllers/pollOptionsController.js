@@ -64,3 +64,16 @@ exports.deletePollOption = async (req, res) => {
     res.status(404).json({ message: "PollOption not found" });
   }
 };
+
+exports.deletePollOptionsByPollId = async (req, res) => {
+  const { poll_id } = req.params;
+  const pollOptions = await PollOption.findAll({ where: { poll_id } });
+
+  if (pollOptions.length > 0) {
+    await Promise.all(pollOptions.map(option => option.destroy()));
+    res.json({ message: "Poll options deleted successfully" });
+  }
+  else {
+    res.status(200).json({ message: "No poll options found for this poll" });
+  }
+};
