@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styles from "./TripPollPage.module.css";
@@ -7,7 +7,7 @@ import { Edit, Trash2 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useAuth } from "../hooks/useAuth";
 
-type PollType = "destination" | "date" | "custom";
+type PollType = "text" | "single-date" | "date-range";
 
 interface Poll {
   id: number;
@@ -43,8 +43,9 @@ interface User {
 }
 
 interface OptionData {
-  type: 'text' | 'date-range';
+  type: 'text' | 'single-date' | 'date-range';
   text?: string;
+  date?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -63,18 +64,24 @@ export function TripPollPage() {
   const [editingPoll, setEditingPoll] = useState<Poll | null>(null);
   const [pollToDelete, setPollToDelete] = useState<{id: number; title: string} | null>(null);
 
-  const formatDateRange = (startDate: string, endDate: string) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
+  const formatDate = (dateString: string, isRange: boolean = false) => {
+    const date = new Date(dateString);
     const formatOptions: Intl.DateTimeFormatOptions = {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
     };
     
-    const startFormatted = start.toLocaleDateString('es-ES', formatOptions);
-    const endFormatted = end.toLocaleDateString('es-ES', formatOptions);
+    const formatted = date.toLocaleDateString('es-ES', formatOptions);
+    return isRange ? formatted : `📅 ${formatted}`;
+  };
+
+  const formatDateRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    const startFormatted = formatDate(startDate, true);
+    const endFormatted = formatDate(endDate, true);
     
     if (start.getFullYear() === end.getFullYear()) {
       const startSameYear = start.toLocaleDateString('es-ES', {
@@ -87,13 +94,13 @@ export function TripPollPage() {
           month: 'short',
           year: 'numeric'
         });
-        return `📅 ${start.getDate()}-${end.getDate()} ${monthYear}`;
+        return `� ${start.getDate()}-${end.getDate()} ${monthYear}`;
       }
       
-      return `📅 ${startSameYear} - ${endFormatted}`;
+      return `� ${startSameYear} - ${endFormatted}`;
     }
     
-    return `📅 ${startFormatted} - ${endFormatted}`;
+    return `� ${startFormatted} - ${endFormatted}`;
   };
 
   const getUserDisplayName = (userId: number): string => {
@@ -121,7 +128,9 @@ export function TripPollPage() {
   ]);
 
   const addOption = () => {
-    if (formData.type === 'date') {
+    if (formData.type === 'single-date') {
+      setNewOptions([...newOptions, { type: 'single-date', date: '' }]);
+    } else if (formData.type === 'date-range') {
       setNewOptions([...newOptions, { type: 'date-range', startDate: '', endDate: '' }]);
     } else {
       setNewOptions([...newOptions, { type: 'text', text: '' }]);
@@ -140,6 +149,12 @@ export function TripPollPage() {
     setNewOptions(updated);
   };
 
+  const updateSingleDateOption = (index: number, value: string) => {
+    const updated = [...newOptions];
+    updated[index] = { ...updated[index], date: value };
+    setNewOptions(updated);
+  };
+
   const updateDateOption = (index: number, field: 'start' | 'end', value: string) => {
     const updated = [...newOptions];
     if (field === 'start') {
@@ -153,7 +168,12 @@ export function TripPollPage() {
   const handleTypeChange = (newType: PollType) => {
     setFormData({...formData, type: newType});
     
-    if (newType === 'date') {
+    if (newType === 'single-date') {
+      setNewOptions([
+        { type: 'single-date', date: '' },
+        { type: 'single-date', date: '' }
+      ]);
+    } else if (newType === 'date-range') {
       setNewOptions([
         { type: 'date-range', startDate: '', endDate: '' },
         { type: 'date-range', startDate: '', endDate: '' }
@@ -170,7 +190,7 @@ export function TripPollPage() {
     setFormData({
       title: '',
       description: '',
-      type: 'custom',
+      type: 'text',
       is_multiple: false
     });
     setNewOptions([
@@ -181,113 +201,98 @@ export function TripPollPage() {
     setEditingPoll(null);
   };
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
+    try {
+      let pollsData: Poll[] = [];
       try {
-        let pollsData: Poll[] = [];
-        try {
-          const pollsRes = await axios.get<Poll[]>(
-            `http://localhost:3000/polls/trip/${tripId}`
-          );
-          pollsData = pollsRes.data ?? [];
-        } catch (pollsError) {
-          if (axios.isAxiosError(pollsError) && pollsError.response?.status === 404) {
-            pollsData = [];
-          } else {
-            throw pollsError;
-          }
-        }
-        
-        if (cancelled) return;
-
-        setPolls(Array.isArray(pollsData) ? pollsData : []);
-
-        if (!pollsData.length) {
-          setPollOptions([]);
-          setVotes([]);
-          return;
-        }
-
-        const optionsPromises = pollsData.map((poll) =>
-          axios.get<PollOption[]>(
-            `http://localhost:3000/poll-options/poll/${poll.id}`
-          )
+        const pollsRes = await axios.get<Poll[]>(
+          `http://localhost:3000/polls/trip/${tripId}`
         );
-
-        const votesPromises = pollsData.map((poll) =>
-          axios
-            .get<Vote[]>(`http://localhost:3000/votes/poll/${poll.id}`)
-            .catch((err) => {
-              if (err?.response?.status === 404) {
-                return { data: [] as Vote[] };
-              }
-              throw err;
-            })
-        );
-
-        const [optionsResults, votesResults] = await Promise.all([
-          Promise.allSettled(optionsPromises),
-          Promise.allSettled(votesPromises),
-        ]);
-        if (cancelled) return;
-
-        const allOptions: PollOption[] = optionsResults.flatMap((r) =>
-          r.status === "fulfilled" ? r.value.data ?? [] : []
-        );
-        const allVotes: Vote[] = votesResults.flatMap((r) =>
-          r.status === "fulfilled" ? r.value.data ?? [] : []
-        );
-
-        if (!cancelled) {
-          setPollOptions(allOptions);
-          setVotes(allVotes);
-          
-          // Cargar información de usuarios que han votado
-          const userIds = [...new Set(allVotes.map(vote => vote.user_id))];
-          if (userIds.length > 0) {
-            try {
-              const token = localStorage.getItem("token");
-              const userPromises = userIds.map(userId =>
-                axios.get<User>(`http://localhost:3000/users/${userId}`, {
-                  headers: { Authorization: `Bearer ${token}` }
-                })
-              );
-              
-              const userResults = await Promise.allSettled(userPromises);
-              const usersData: User[] = [];
-              userResults.forEach(result => {
-                if (result.status === 'fulfilled') {
-                  usersData.push(result.value.data);
-                }
-              });
-              
-              if (!cancelled) {
-                setUsers(usersData);
-              }
-            } catch (error) {
-              console.error("Error loading user data:", error);
-            }
-          }
+        pollsData = pollsRes.data ?? [];
+      } catch (pollsError) {
+        if (axios.isAxiosError(pollsError) && pollsError.response?.status === 404) {
+          pollsData = [];
+        } else {
+          throw pollsError;
         }
-      } catch {
-        if (!cancelled) {
-          setError("No se pudieron cargar las encuestas.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
-    };
 
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
+      setPolls(Array.isArray(pollsData) ? pollsData : []);
+
+      if (!pollsData.length) {
+        setPollOptions([]);
+        setVotes([]);
+        return;
+      }
+
+      const optionsPromises = pollsData.map((poll) =>
+        axios.get<PollOption[]>(
+          `http://localhost:3000/poll-options/poll/${poll.id}`
+        )
+      );
+
+      const votesPromises = pollsData.map((poll) =>
+        axios
+          .get<Vote[]>(`http://localhost:3000/votes/poll/${poll.id}`)
+          .catch((err) => {
+            if (err?.response?.status === 404) {
+              return { data: [] as Vote[] };
+            }
+            throw err;
+          })
+      );
+
+      const [optionsResults, votesResults] = await Promise.all([
+        Promise.allSettled(optionsPromises),
+        Promise.allSettled(votesPromises),
+      ]);
+
+      const allOptions: PollOption[] = optionsResults.flatMap((r) =>
+        r.status === "fulfilled" ? r.value.data ?? [] : []
+      );
+      const allVotes: Vote[] = votesResults.flatMap((r) =>
+        r.status === "fulfilled" ? r.value.data ?? [] : []
+      );
+
+      setPollOptions(allOptions);
+      setVotes(allVotes);
+      
+      const userIds = [...new Set(allVotes.map(vote => vote.user_id))];
+      if (userIds.length > 0) {
+        try {
+          const token = localStorage.getItem("token");
+          const userPromises = userIds.map(userId =>
+            axios.get<User>(`http://localhost:3000/users/${userId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          );
+          
+          const userResults = await Promise.allSettled(userPromises);
+          const usersData: User[] = [];
+          userResults.forEach(result => {
+            if (result.status === 'fulfilled') {
+              usersData.push(result.value.data);
+            }
+          });
+          
+          setUsers(usersData);
+        } catch (error) {
+          console.error("Error loading user data:", error);
+        }
+      }
+    } catch {
+      setError("No se pudieron cargar las encuestas.");
+    } finally {
+      setLoading(false);
+    }
   }, [tripId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   async function voteOption(poll: Poll, optionId: number) {
     try {
@@ -330,7 +335,13 @@ export function TripPollPage() {
     
     try {
       let validOptions;
-      if (formData.type === 'date') {
+      if (formData.type === 'single-date') {
+        validOptions = newOptions.filter(opt => opt.date && opt.date.trim() !== '');
+        if (validOptions.length < 2) {
+          toast.error('Debes agregar al menos 2 fechas válidas');
+          return;
+        }
+      } else if (formData.type === 'date-range') {
         validOptions = newOptions.filter(opt => 
           opt.startDate && opt.endDate && opt.startDate <= opt.endDate
         );
@@ -362,17 +373,29 @@ export function TripPollPage() {
       const pollId = newPoll.poll?.id || newPoll.id;
       
       const optionPromises = validOptions.map(option => {
-        const optionData = formData.type === 'date' ? {
-          poll_id: pollId,
-          label: null,
-          start_date: option.startDate,
-          end_date: option.endDate
-        } : {
-          poll_id: pollId,
-          label: option.text,
-          start_date: null,
-          end_date: null
-        };
+        let optionData;
+        if (formData.type === 'single-date') {
+          optionData = {
+            poll_id: pollId,
+            label: null,
+            start_date: option.date,
+            end_date: null
+          };
+        } else if (formData.type === 'date-range') {
+          optionData = {
+            poll_id: pollId,
+            label: null,
+            start_date: option.startDate,
+            end_date: option.endDate
+          };
+        } else {
+          optionData = {
+            poll_id: pollId,
+            label: option.text,
+            start_date: null,
+            end_date: null
+          };
+        }
                 
         return axios.post('http://localhost:3000/poll-options', optionData, {
           headers: {
@@ -381,17 +404,12 @@ export function TripPollPage() {
         });
       });
 
-      const optionsResponses = await Promise.all(optionPromises);
-
-      const pollToAdd = newPoll.poll || newPoll;
-      setPolls(prev => [...prev, pollToAdd]);
-      
-      // Añadir las nuevas opciones al estado
-      const newPollOptions = optionsResponses.map(response => response.data);
-      setPollOptions(prev => [...prev, ...newPollOptions]);
+      await Promise.all(optionPromises);
       
       resetForm();
       toast.success('Encuesta creada exitosamente');
+      
+      await fetchData();
       
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -409,12 +427,27 @@ export function TripPollPage() {
     try {
       const token = localStorage.getItem('token');
       
-      // Eliminar votos de la encuesta
-      await axios.delete(`http://localhost:3000/votes/poll/${pollId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Intentar eliminar votos individualmente primero
+      try {
+        const votesResponse = await axios.get(`http://localhost:3000/votes/poll/${pollId}`);
+        const votes = votesResponse.data || [];
+        
+        // Eliminar cada voto por su ID individual
+        for (const vote of votes) {
+          try {
+            await axios.delete(`http://localhost:3000/votes/${vote.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } catch (voteError) {
+            console.warn(`No se pudo eliminar voto ${vote.id}:`, voteError);
+          }
+        }
+      } catch (votesError) {
+        console.warn('No se pudieron eliminar los votos:', votesError);
+        // Continuamos sin votos, la DB debería manejar la integridad referencial
+      }
       
-      // Eliminar opciones de la encuesta
+      // Eliminar opciones de la encuesta (este endpoint sí existe)
       await axios.delete(`http://localhost:3000/poll-options/poll/${pollId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -424,15 +457,17 @@ export function TripPollPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Actualizar el estado local
-      setPolls(prev => prev.filter(poll => poll.id !== pollId));
-      setPollOptions(prev => prev.filter(option => option.poll_id !== pollId));
-      setVotes(prev => prev.filter(vote => vote.poll_id !== pollId));
-      
       toast.success('Encuesta eliminada exitosamente');
+      
+      await fetchData();
     } catch (error) {
       console.error('Error deleting poll:', error);
-      toast.error('Error al eliminar la encuesta');
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || 'Error al eliminar la encuesta';
+        toast.error(message);
+      } else {
+        toast.error('Error al eliminar la encuesta');
+      }
     } finally {
       setPollToDelete(null);
     }
@@ -449,7 +484,12 @@ export function TripPollPage() {
       is_multiple: poll.is_multiple
     });
     
-    if (poll.type === 'date') {
+    if (poll.type === 'single-date') {
+      setNewOptions(options.map(option => ({
+        type: 'single-date' as const,
+        date: option.start_date || ''
+      })));
+    } else if (poll.type === 'date-range') {
       setNewOptions(options.map(option => ({
         type: 'date-range' as const,
         startDate: option.start_date || '',
@@ -473,7 +513,13 @@ export function TripPollPage() {
     
     try {
       let validOptions: OptionData[];
-      if (formData.type === 'date') {
+      if (formData.type === 'single-date') {
+        validOptions = newOptions.filter((opt: OptionData) => opt.date && opt.date.trim() !== '');
+        if (validOptions.length < 2) {
+          toast.error('Debes agregar al menos 2 fechas válidas');
+          return;
+        }
+      } else if (formData.type === 'date-range') {
         validOptions = newOptions.filter((opt: OptionData) => 
           opt.startDate && opt.endDate && opt.startDate <= opt.endDate
         );
@@ -491,7 +537,7 @@ export function TripPollPage() {
 
       const token = localStorage.getItem('token');
       
-      // Actualizar la encuesta
+
       await axios.put(`http://localhost:3000/polls/${editingPoll.id}`, {
         trip_id: parseInt(tripId!),
         title: formData.title,
@@ -502,15 +548,14 @@ export function TripPollPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Solo eliminar opciones si el tipo de encuesta cambió o hay diferencias significativas
+
       const existingOptions = pollOptions.filter(option => option.poll_id === editingPoll.id);
       const shouldReplaceOptions = formData.type !== editingPoll.type || 
         existingOptions.length !== validOptions.length;
 
-      let newPollOptions: PollOption[] = [];
+
 
       if (shouldReplaceOptions) {
-        // Si cambió el tipo, eliminar todo y recrear (se perderán los votos)
         await axios.delete(`http://localhost:3000/votes/poll/${editingPoll.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -519,65 +564,97 @@ export function TripPollPage() {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        // Crear nuevas opciones
+
         const optionPromises = validOptions.map((option: OptionData) => {
-          const optionData = formData.type === 'date' ? {
-            poll_id: editingPoll.id,
-            label: null,
-            start_date: option.startDate,
-            end_date: option.endDate
-          } : {
-            poll_id: editingPoll.id,
-            label: option.text,
-            start_date: null,
-            end_date: null
-          };
+          let optionData;
+          if (formData.type === 'single-date') {
+            optionData = {
+              poll_id: editingPoll.id,
+              label: null,
+              start_date: option.date,
+              end_date: null
+            };
+          } else if (formData.type === 'date-range') {
+            optionData = {
+              poll_id: editingPoll.id,
+              label: null,
+              start_date: option.startDate,
+              end_date: option.endDate
+            };
+          } else {
+            optionData = {
+              poll_id: editingPoll.id,
+              label: option.text,
+              start_date: null,
+              end_date: null
+            };
+          }
                   
           return axios.post('http://localhost:3000/poll-options', optionData, {
             headers: { Authorization: `Bearer ${token}` }
           });
         });
 
-        const optionsResponses = await Promise.all(optionPromises);
-        newPollOptions = optionsResponses.map((response: {data: PollOption}) => response.data);
+        await Promise.all(optionPromises);
         
-        // Limpiar votos del estado local también
         setVotes(prev => prev.filter(vote => vote.poll_id !== editingPoll.id));
         
         toast.warning('Tipo de encuesta cambiado - los votos existentes se han eliminado');
       } else {
-        // Solo actualizar opciones existentes preservando votos
         const updatePromises = validOptions.map((option: OptionData, index: number) => {
           const existingOption = existingOptions[index];
           if (existingOption) {
-            const optionData = formData.type === 'date' ? {
-              poll_id: editingPoll.id,
-              label: null,
-              start_date: option.startDate,
-              end_date: option.endDate
-            } : {
-              poll_id: editingPoll.id,
-              label: option.text,
-              start_date: null,
-              end_date: null
-            };
+            let optionData;
+            if (formData.type === 'single-date') {
+              optionData = {
+                poll_id: editingPoll.id,
+                label: null,
+                start_date: option.date,
+                end_date: null
+              };
+            } else if (formData.type === 'date-range') {
+              optionData = {
+                poll_id: editingPoll.id,
+                label: null,
+                start_date: option.startDate,
+                end_date: option.endDate
+              };
+            } else {
+              optionData = {
+                poll_id: editingPoll.id,
+                label: option.text,
+                start_date: null,
+                end_date: null
+              };
+            }
             
             return axios.put(`http://localhost:3000/poll-options/${existingOption.id}`, optionData, {
               headers: { Authorization: `Bearer ${token}` }
             });
           } else {
-            // Nueva opción
-            const optionData = formData.type === 'date' ? {
-              poll_id: editingPoll.id,
-              label: null,
-              start_date: option.startDate,
-              end_date: option.endDate
-            } : {
-              poll_id: editingPoll.id,
-              label: option.text,
-              start_date: null,
-              end_date: null
-            };
+            let optionData;
+            if (formData.type === 'single-date') {
+              optionData = {
+                poll_id: editingPoll.id,
+                label: null,
+                start_date: option.date,
+                end_date: null
+              };
+            } else if (formData.type === 'date-range') {
+              optionData = {
+                poll_id: editingPoll.id,
+                label: null,
+                start_date: option.startDate,
+                end_date: option.endDate
+              };
+            } else {
+              optionData = {
+                poll_id: editingPoll.id,
+                label: option.text,
+                start_date: null,
+                end_date: null
+              };
+            }
             
             return axios.post('http://localhost:3000/poll-options', optionData, {
               headers: { Authorization: `Bearer ${token}` }
@@ -585,10 +662,7 @@ export function TripPollPage() {
           }
         });
 
-        const optionsResponses = await Promise.all(updatePromises);
-        newPollOptions = optionsResponses.map((response: {data: PollOption}) => response.data);
-
-        // Eliminar opciones sobrantes si las hay
+        await Promise.all(updatePromises);
         if (existingOptions.length > validOptions.length) {
           const optionsToDelete = existingOptions.slice(validOptions.length);
           await Promise.all(optionsToDelete.map(option => 
@@ -598,17 +672,6 @@ export function TripPollPage() {
           ));
         }
       }
-      // Actualizar estados locales
-      setPolls(prev => prev.map(poll => 
-        poll.id === editingPoll.id 
-          ? { ...poll, ...formData }
-          : poll
-      ));
-      
-      setPollOptions(prev => [
-        ...prev.filter(option => option.poll_id !== editingPoll.id),
-        ...newPollOptions
-      ]);
       
       resetForm();
       setEditingPoll(null);
@@ -618,6 +681,8 @@ export function TripPollPage() {
       } else {
         toast.success('Encuesta actualizada - votos preservados');
       }
+      
+      await fetchData();
       
     } catch (error) {
       console.error('Error updating poll:', error);
@@ -666,9 +731,9 @@ export function TripPollPage() {
                 onChange={(e) => handleTypeChange(e.target.value as PollType)}
                 required
               >
-                <option value="destination">Destino</option>
-                <option value="date">Fechas</option>
-                <option value="custom">Personalizado</option>
+                <option value="text">📝 Texto</option>
+                <option value="single-date">📅 Fechas Individuales</option>
+                <option value="date-range">📆 Períodos de Fechas</option>
               </select>
             </label>
             <label>
@@ -681,11 +746,31 @@ export function TripPollPage() {
               />
             </label>
             
-            {/* Sección de opciones */}
+
             <div className={styles.optionsSection}>
               <h4>Opciones de la encuesta:</h4>
-              {formData.type === 'date' ? (
-                // Opciones para encuestas de fechas
+              {formData.type === 'single-date' ? (
+                newOptions.map((option, index) => (
+                  <div key={index} className={styles.optionInput}>
+                    <input
+                      type="date"
+                      placeholder={`Fecha ${index + 1}`}
+                      value={option.date || ''}
+                      onChange={(e) => updateSingleDateOption(index, e.target.value)}
+                      required
+                    />
+                    {newOptions.length > 2 && (
+                      <button
+                        type="button"
+                        className={styles.removeBtn}
+                        onClick={() => removeOption(index)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))
+              ) : formData.type === 'date-range' ? (
                 newOptions.map((option, index) => (
                   <div key={index} className={styles.optionInput}>
                     <div className={styles.dateInputs}>
@@ -716,7 +801,6 @@ export function TripPollPage() {
                   </div>
                 ))
               ) : (
-                // Opciones para encuestas de texto
                 newOptions.map((option, index) => (
                   <div key={index} className={styles.optionInput}>
                     <input
@@ -855,6 +939,8 @@ export function TripPollPage() {
                               {option.label ||
                                 (option.start_date && option.end_date
                                   ? formatDateRange(option.start_date, option.end_date)
+                                  : option.start_date && !option.end_date
+                                  ? formatDate(option.start_date)
                                   : "Opción sin título")}
                             </span>
                             <div className={styles.voteStats}>
@@ -907,7 +993,6 @@ export function TripPollPage() {
         );
       })}
       
-      {/* Delete Confirmation Dialog */}
       <Dialog.Root
         open={!!pollToDelete}
         onOpenChange={(open) => !open && setPollToDelete(null)}

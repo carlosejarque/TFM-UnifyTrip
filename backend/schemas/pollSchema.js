@@ -5,6 +5,6 @@ exports.pollSchema = Joi.object({
   created_by: Joi.number().integer(),
   title: Joi.string().min(2).max(255),
   description: Joi.string().allow('', null),
-  type: Joi.string().valid('date', 'destination', 'custom').required(),
+  type: Joi.string(),
   is_multiple: Joi.boolean()
 });
