@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import styles from "./TripParticipantsPage.module.css";
 import { ShareTripModal } from "../components/ShareTripModal";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type Trip = {
   id: number;
@@ -41,7 +42,7 @@ export function TripParticipantsPage() {
         const token = localStorage.getItem("token");
 
         const tripResponse = await axios.get(
-          `http://localhost:3000/trips/${id}`,
+          `${API_URL}/trips/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -49,7 +50,7 @@ export function TripParticipantsPage() {
         setTrip(tripResponse.data);
 
         const tripParticipants = await axios.get(
-          `http://localhost:3000/trip-participants/trip/${id}`,
+          `${API_URL}/trip-participants/trip/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -61,7 +62,7 @@ export function TripParticipantsPage() {
         const participantsData = await Promise.all(
           participantIds.map(async (userId: number) => {
             const userResponse = await axios.get(
-              `http://localhost:3000/users/${userId}`,
+              `${API_URL}/users/${userId}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }

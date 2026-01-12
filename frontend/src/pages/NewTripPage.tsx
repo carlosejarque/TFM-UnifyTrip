@@ -7,6 +7,7 @@ import "react-date-range/dist/theme/default.css";
 import styles from "./NewTripPage.module.css";
 import axios from "axios";
 import { toast } from "sonner";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type NewTripForm = {
   title: string;
@@ -307,7 +308,7 @@ export function NewTripPage() {
                     const token = localStorage.getItem("token");
                     
                     const tripResponse = await axios.post(
-                      "http://localhost:3000/trips",
+                      `${API_URL}/trips`,
                       {
                         title: form.title, 
                         description: toNull(form.description), 
@@ -333,7 +334,7 @@ export function NewTripPage() {
                     
                     if (tripId) {
                       await axios.post(
-                        "http://localhost:3000/itineraries",
+                        `${API_URL}/itineraries`,
                         {
                           trip_id: tripId,
                         },
@@ -347,7 +348,7 @@ export function NewTripPage() {
 
                     if (tripId) {
                       await axios.post(
-                        `http://localhost:3000/trip-participants`,
+                        `${API_URL}/trip-participants`,
                         { 
                           trip_id: tripId
                         },

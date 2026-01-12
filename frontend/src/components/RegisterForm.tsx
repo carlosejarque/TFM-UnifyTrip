@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import styles from "./RegisterForm.module.css";
 import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type RegisterFormInputs = {
   name: string;
@@ -25,7 +26,7 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterFormInputs) => {
     try {
       await axios.post(
-        "http://localhost:3000/users/register",
+       `${API_URL}/users/register`,
         {
           username: data.name,
           email: data.email,

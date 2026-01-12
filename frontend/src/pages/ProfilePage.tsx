@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { User, Lock, Mail, Save, ArrowLeft } from "lucide-react";
 import styles from "./ProfilePage.module.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const ProfilePage = () => {
   const { user } = useAuth();
@@ -38,7 +39,7 @@ export const ProfilePage = () => {
     
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:3000/api/users/update-username", {
+      const response = await fetch(`${API_URL}/api/users/update-username`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +91,7 @@ export const ProfilePage = () => {
     
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:3000/api/users/update-password", {
+      const response = await fetch(`${API_URL}/api/users/update-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

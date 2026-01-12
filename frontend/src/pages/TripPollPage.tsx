@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Edit, Trash2 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useAuth } from "../hooks/useAuth";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type PollType = "text" | "single-date" | "date-range";
 
@@ -209,7 +210,7 @@ export function TripPollPage() {
       let pollsData: Poll[] = [];
       try {
         const pollsRes = await axios.get<Poll[]>(
-          `http://localhost:3000/polls/trip/${tripId}`
+          `${API_URL}/polls/trip/${tripId}`
         );
         pollsData = pollsRes.data ?? [];
       } catch (pollsError) {
@@ -230,13 +231,13 @@ export function TripPollPage() {
 
       const optionsPromises = pollsData.map((poll) =>
         axios.get<PollOption[]>(
-          `http://localhost:3000/poll-options/poll/${poll.id}`
+          `${API_URL}/poll-options/poll/${poll.id}`
         )
       );
 
       const votesPromises = pollsData.map((poll) =>
         axios
-          .get<Vote[]>(`http://localhost:3000/votes/poll/${poll.id}`)
+          .get<Vote[]>(`${API_URL}/votes/poll/${poll.id}`)
           .catch((err) => {
             if (err?.response?.status === 404) {
               return { data: [] as Vote[] };
@@ -265,7 +266,7 @@ export function TripPollPage() {
         try {
           const token = localStorage.getItem("token");
           const userPromises = userIds.map(userId =>
-            axios.get<User>(`http://localhost:3000/users/${userId}`, {
+            axios.get<User>(`${API_URL}/users/${userId}`, {
               headers: { Authorization: `Bearer ${token}` }
             })
           );
@@ -297,7 +298,7 @@ export function TripPollPage() {
   async function voteOption(poll: Poll, optionId: number) {
     try {
       
-      await axios.post("http://localhost:3000/votes", {
+      await axios.post(`${API_URL}/votes`, {
         poll_id: poll.id,
         poll_option_id: optionId,
         value: 1,
@@ -310,7 +311,7 @@ export function TripPollPage() {
       let newVotes: Vote[] = [];
       try {
         const { data } = await axios.get<Vote[]>(
-          `http://localhost:3000/votes/poll/${poll.id}`
+          `${API_URL}/votes/poll/${poll.id}`
         );
         newVotes = data ?? [];
       } catch (err: unknown) {
@@ -357,7 +358,7 @@ export function TripPollPage() {
         }
       }
 
-      const pollResponse = await axios.post('http://localhost:3000/polls', {
+      const pollResponse = await axios.post(`${API_URL}/polls`, {
         trip_id: parseInt(tripId!),
         title: formData.title,
         description: formData.description || null,
@@ -397,7 +398,7 @@ export function TripPollPage() {
           };
         }
                 
-        return axios.post('http://localhost:3000/poll-options', optionData, {
+        return axios.post(`${API_URL}/poll-options`, optionData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -429,13 +430,13 @@ export function TripPollPage() {
       
       // Intentar eliminar votos individualmente primero
       try {
-        const votesResponse = await axios.get(`http://localhost:3000/votes/poll/${pollId}`);
+        const votesResponse = await axios.get(`${API_URL}/votes/poll/${pollId}`);
         const votes = votesResponse.data || [];
         
         // Eliminar cada voto por su ID individual
         for (const vote of votes) {
           try {
-            await axios.delete(`http://localhost:3000/votes/${vote.id}`, {
+            await axios.delete(`${API_URL}/votes/${vote.id}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
           } catch (voteError) {
@@ -448,12 +449,12 @@ export function TripPollPage() {
       }
       
       // Eliminar opciones de la encuesta (este endpoint sí existe)
-      await axios.delete(`http://localhost:3000/poll-options/poll/${pollId}`, {
+      await axios.delete(`${API_URL}/poll-options/poll/${pollId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       // Eliminar la encuesta
-      await axios.delete(`http://localhost:3000/polls/${pollId}`, {
+      await axios.delete(`${API_URL}/polls/${pollId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -538,7 +539,7 @@ export function TripPollPage() {
       const token = localStorage.getItem('token');
       
 
-      await axios.put(`http://localhost:3000/polls/${editingPoll.id}`, {
+      await axios.put(`${API_URL}/polls/${editingPoll.id}`, {
         trip_id: parseInt(tripId!),
         title: formData.title,
         description: formData.description || null,
@@ -556,11 +557,11 @@ export function TripPollPage() {
 
 
       if (shouldReplaceOptions) {
-        await axios.delete(`http://localhost:3000/votes/poll/${editingPoll.id}`, {
+        await axios.delete(`${API_URL}/votes/poll/${editingPoll.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        await axios.delete(`http://localhost:3000/poll-options/poll/${editingPoll.id}`, {
+        await axios.delete(`${API_URL}/poll-options/poll/${editingPoll.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -590,7 +591,7 @@ export function TripPollPage() {
             };
           }
                   
-          return axios.post('http://localhost:3000/poll-options', optionData, {
+          return axios.post('${API_URL}/poll-options', optionData, {
             headers: { Authorization: `Bearer ${token}` }
           });
         });
@@ -628,7 +629,7 @@ export function TripPollPage() {
               };
             }
             
-            return axios.put(`http://localhost:3000/poll-options/${existingOption.id}`, optionData, {
+            return axios.put(`${API_URL}/poll-options/${existingOption.id}`, optionData, {
               headers: { Authorization: `Bearer ${token}` }
             });
           } else {
@@ -656,7 +657,7 @@ export function TripPollPage() {
               };
             }
             
-            return axios.post('http://localhost:3000/poll-options', optionData, {
+            return axios.post(`${API_URL}/poll-options`, optionData, {
               headers: { Authorization: `Bearer ${token}` }
             });
           }
@@ -666,7 +667,7 @@ export function TripPollPage() {
         if (existingOptions.length > validOptions.length) {
           const optionsToDelete = existingOptions.slice(validOptions.length);
           await Promise.all(optionsToDelete.map(option => 
-            axios.delete(`http://localhost:3000/poll-options/${option.id}`, {
+            axios.delete(`${API_URL}/poll-options/${option.id}`, {
               headers: { Authorization: `Bearer ${token}` }
             })
           ));

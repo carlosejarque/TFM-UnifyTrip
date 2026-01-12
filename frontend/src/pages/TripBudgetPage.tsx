@@ -13,6 +13,7 @@ import {
   TrendingDown,
   X,
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type Participant = {
   id: number;
@@ -103,7 +104,7 @@ export function TripBudgetPage() {
 
       try {
         const participantsResponse = await axios.get(
-          `http://localhost:3000/trip-participants/trip/${id}`,
+          `${API_URL}/trip-participants/trip/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -112,7 +113,7 @@ export function TripBudgetPage() {
         for (const participant of participantsResponse.data) {
           try {
             const userResponse = await axios.get(
-              `http://localhost:3000/users/${participant.user_id}`,
+              `${API_URL}/users/${participant.user_id}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -137,7 +138,7 @@ export function TripBudgetPage() {
 
         try {
           const expensesResponse = await axios.get(
-            `http://localhost:3000/expenses/trip/${id}`,
+            `${API_URL}/expenses/trip/${id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
 
@@ -153,7 +154,7 @@ export function TripBudgetPage() {
                 let expenseParticipants: string[] = [];
                 try {
                   const participantsResponse = await axios.get(
-                    `http://localhost:3000/expense-participants/expense/${expense.id}`,
+                    `${API_URL}/expense-participants/expense/${expense.id}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                   );
                   
@@ -182,7 +183,7 @@ export function TripBudgetPage() {
             
             try {
               const personalExpenseResponse = await axios.get(
-                `http://localhost:3000/expense-participants/personal`,
+                `${API_URL}/expense-participants/personal`,
                 { headers: { Authorization: `Bearer ${token}` } }
               );
 
@@ -402,7 +403,7 @@ export function TripBudgetPage() {
 
       const token = localStorage.getItem("token");
       const savedExpenseResponse = await axios.post(
-        `http://localhost:3000/expenses/`,
+        `${API_URL}/expenses/`,
         {
           trip_id: parseInt(id!),
           description: formData.description,
@@ -436,7 +437,7 @@ export function TripBudgetPage() {
           }
 
           await axios.post(
-            `http://localhost:3000/expense-participants/`,
+            `${API_URL}/expense-participants/`,
             {
               expense_id: expenseId,
               user_id: participant.id,
@@ -474,7 +475,7 @@ export function TripBudgetPage() {
 
       try {
         await axios.delete(
-          `http://localhost:3000/expense-participants/expense/${expenseToDelete.id}`,
+          `${API_URL}/expense-participants/expense/${expenseToDelete.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch {
@@ -482,7 +483,7 @@ export function TripBudgetPage() {
       }
       
       await axios.delete(
-        `http://localhost:3000/expenses/${expenseToDelete.id}`,
+        `${API_URL}/expenses/${expenseToDelete.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -566,7 +567,7 @@ export function TripBudgetPage() {
 
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:3000/expenses/${editingExpense.id}`,
+        `${API_URL}/expenses/${editingExpense.id}`,
         {
           trip_id: parseInt(id!),
           description: editFormData.description,
@@ -580,7 +581,7 @@ export function TripBudgetPage() {
 
       try {
         await axios.delete(
-          `http://localhost:3000/expense-participants/expense/${editingExpense.id}`,
+          `${API_URL}/expense-participants/expense/${editingExpense.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch (deleteError) {
@@ -602,7 +603,7 @@ export function TripBudgetPage() {
 
           try {
             await axios.post(
-              `http://localhost:3000/expense-participants/`,
+              `${API_URL}/expense-participants/`,
               {
                 expense_id: editingExpense.id,
                 user_id: participant.id,

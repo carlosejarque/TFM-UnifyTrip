@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import styles from "./MyTripsPage.module.css";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type Trip = {
   id: number;
@@ -61,7 +62,7 @@ export function MyTripsPage() {
         setError(null);
         const token = localStorage.getItem("token");
         
-        const participantsResponse = await axios.get("http://localhost:3000/trip-participants/my", {
+        const participantsResponse = await axios.get(`${API_URL}/trip-participants/my`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -71,7 +72,7 @@ export function MyTripsPage() {
         
         if (Array.isArray(tripIds) && tripIds.length > 0) {
           const tripDetailsPromises = tripIds.map(tripId => 
-            axios.get(`http://localhost:3000/trips/${tripId}`, {
+            axios.get(`${API_URL}/trips/${tripId}`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },

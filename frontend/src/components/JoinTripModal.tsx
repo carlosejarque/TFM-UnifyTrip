@@ -4,6 +4,8 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import styles from "./JoinTripModal.module.css";
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 interface JoinTripModalProps {
   isOpen: boolean;
@@ -27,7 +29,7 @@ export function JoinTripModal({ isOpen, onClose, onSuccess }: JoinTripModalProps
       const token = localStorage.getItem("token");
 
       const findResponse = await axios.get(
-        `http://localhost:3000/invitations/find-by-code/${code}`,
+        `${API_URL}/invitations/find-by-code/${code}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -36,7 +38,7 @@ export function JoinTripModal({ isOpen, onClose, onSuccess }: JoinTripModalProps
       const invitationToken = findResponse.data.token;
 
       const response = await axios.post(
-        `http://localhost:3000/invitations/join/${invitationToken}/accept`,
+        `${API_URL}/invitations/join/${invitationToken}/accept`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

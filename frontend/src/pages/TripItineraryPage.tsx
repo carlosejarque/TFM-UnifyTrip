@@ -15,6 +15,7 @@ import {
   Edit,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type Trip = {
   id: number;
@@ -65,7 +66,7 @@ export function TripItineraryPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/users/${userId}`, {
+      const response = await axios.get(`${API_URL}/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const username = response.data.username;
@@ -143,7 +144,7 @@ export function TripItineraryPage() {
         const token = localStorage.getItem("token");
 
         const tripResponse = await axios.get(
-          `http://localhost:3000/trips/${tripId}`,
+          `${API_URL}/trips/${tripId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -160,7 +161,7 @@ export function TripItineraryPage() {
         }
 
         const itineraryResponse = await axios.get(
-          `http://localhost:3000/itineraries/trip/${tripId}`,
+          `${API_URL}/itineraries/trip/${tripId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -172,7 +173,7 @@ export function TripItineraryPage() {
 
         try {
           const activitiesResponse = await axios.get(
-            `http://localhost:3000/activities/itinerary/${itineraryData.id}`,
+            `${API_URL}/activities/itinerary/${itineraryData.id}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -326,7 +327,7 @@ export function TripItineraryPage() {
         : null;
 
       await axios.post(
-        `http://localhost:3000/activities`,
+        `${API_URL}/activities`,
         {
           trip_id: parseInt(tripId),
           itinerary_id: itinerary.id,
@@ -364,7 +365,7 @@ export function TripItineraryPage() {
     try {
       const token = localStorage.getItem("token");
 
-      await axios.delete(`http://localhost:3000/activities/${activityId}`, {
+      await axios.delete(`${API_URL}/activities/${activityId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -433,7 +434,7 @@ export function TripItineraryPage() {
       };
 
       await axios.put(
-        `http://localhost:3000/activities/${editingActivity.id}`,
+        `${API_URL}/activities/${editingActivity.id}`,
         activityData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -457,7 +458,7 @@ export function TripItineraryPage() {
       if (!token || !itinerary?.id) return;
 
       const activitiesResponse = await axios.get(
-        `http://localhost:3000/activities/itinerary/${itinerary.id}`,
+        `${API_URL}/activities/itinerary/${itinerary.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -486,7 +487,7 @@ export function TripItineraryPage() {
         }
 
         const response = await axios.post(
-          'http://localhost:3000/AI/generate-itinerary',
+          `${API_URL}/AI/generate-itinerary`,
           {
             destination: trip.destination || null,
             startDate: trip.start_date,
@@ -513,7 +514,7 @@ export function TripItineraryPage() {
           aiActivities.map(async (aiActivity) => {
             try {
               const activityResponse = await axios.post(
-                'http://localhost:3000/activities',
+                `${API_URL}/activities`,
                 {
                   trip_id: parseInt(tripId!),
                   itinerary_id: itinerary?.id || 0,

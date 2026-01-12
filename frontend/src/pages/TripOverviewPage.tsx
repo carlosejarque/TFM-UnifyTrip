@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import styles from "./TripOverviewPage.module.css";
 import { AIPreferencesModal } from "../components/AIDestinationForm";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type Trip = {
   id: number;
@@ -86,7 +87,7 @@ export function TripOverviewPage() {
         const token = localStorage.getItem("token");
 
         const tripResponse = await axios.get(
-          `http://localhost:3000/trips/${id}`,
+          `${API_URL}/trips/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -99,7 +100,7 @@ export function TripOverviewPage() {
         setNewDescription(tripResponse.data.description || "");
 
         const tripParticipants = await axios.get(
-          `http://localhost:3000/trip-participants/trip/${id}`,
+          `${API_URL}/trip-participants/trip/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -109,7 +110,7 @@ export function TripOverviewPage() {
         const participantsData = await Promise.all(
           participantIds.map(async (userId: number) => {
             const userResponse = await axios.get(
-              `http://localhost:3000/users/${userId}`,
+              `${API_URL}/users/${userId}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
@@ -152,7 +153,7 @@ export function TripOverviewPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        'http://localhost:3000/AI/recommend-destinations',
+        `${API_URL}/AI/recommend-destinations`,
         preferences,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -211,7 +212,7 @@ export function TripOverviewPage() {
       }
       
       await axios.put(
-        `http://localhost:3000/trips/${id}`,
+        `${API_URL}/trips/${id}`,
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -233,7 +234,7 @@ export function TripOverviewPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:3000/trips/${id}`,
+        `${API_URL}/trips/${id}`,
         { title: trip?.title, start_date: newStartDate, end_date: newEndDate },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -256,7 +257,7 @@ export function TripOverviewPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:3000/trips/${id}`,
+        `${API_URL}/trips/${id}`,
         { title: newTitle },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -273,7 +274,7 @@ export function TripOverviewPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:3000/trips/${id}`,
+        `${API_URL}/trips/${id}`,
         { description: newDescription },
         { headers: { Authorization: `Bearer ${token}` } }
       );

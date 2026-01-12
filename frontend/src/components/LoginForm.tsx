@@ -4,6 +4,7 @@ import styles from "./LoginForm.module.css";
 import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+const API_URL = import.meta.env.VITE_API_URL;
 
 type LoginFormInputs = {
   email: string;
@@ -23,7 +24,7 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      const response = await axios.post("http://localhost:3000/users/login", {
+      const response = await axios.post(`${API_URL}/users/login`, {
         email: data.email,
         password: data.password,
       });

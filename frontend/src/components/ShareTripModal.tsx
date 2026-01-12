@@ -3,6 +3,7 @@ import { X, Link2, Copy, Check, RefreshCw, Share2 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import styles from "./ShareTripModal.module.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface ShareTripModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ export function ShareTripModal({
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:3000/invitations/trips/${tripId}/link`,
+        `${API_URL}/invitations/trips/${tripId}/link`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -59,7 +60,7 @@ export function ShareTripModal({
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:3000/invitations/trips/${tripId}/link`,
+        `${API_URL}/invitations/trips/${tripId}/link`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

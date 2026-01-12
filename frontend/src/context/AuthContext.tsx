@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface User {
   id: number;
@@ -49,7 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const token = localStorage.getItem('token');
       if (!token) return null;
 
-      const response = await axios.get('http://localhost:3000/users/profile');
+      const response = await axios.get(`${API_URL}/users/profile`);
       return response.data;
     } catch (error) {
       console.error('Error fetching user info from API, using token decode as fallback:', error);
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return false;
       }
 
-      const response = await axios.post('http://localhost:3000/users/refresh', {
+      const response = await axios.post(`${API_URL}/users/refresh`, {
         refreshToken
       });
 

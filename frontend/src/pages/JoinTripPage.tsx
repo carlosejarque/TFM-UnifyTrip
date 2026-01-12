@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import styles from "./JoinTripPage.module.css";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface TripInfo {
   id: number;
@@ -50,7 +51,7 @@ export const JoinTripPage = () => {
 
   const validateInvitation = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/invitations/validate/${token}`);
+      const response = await axios.get(`${API_URL}/invitations/validate/${token}`);
       setValidationData(response.data);
     } catch (error: any) {
       const message = error.response?.data?.message || "Token de invitación inválido";
@@ -69,7 +70,7 @@ export const JoinTripPage = () => {
 
     setJoining(true);
     try {
-      const response = await axios.post(`http://localhost:3000/invitations/accept/${token}`);
+      const response = await axios.post(`${API_URL}/invitations/accept/${token}`);
       toast.success("¡Te has unido al viaje exitosamente!");
       navigate(`/trips/${response.data.trip.id}`);
     } catch (error: any) {
