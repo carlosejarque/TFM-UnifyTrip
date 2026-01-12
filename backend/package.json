@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "migrate": "node migrations/run-migrations.js",
     "test": "jest --coverage"
   },
   "keywords": [],
