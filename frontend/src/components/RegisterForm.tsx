@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.png";
 import styles from "./RegisterForm.module.css";
 import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";

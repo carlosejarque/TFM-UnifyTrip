@@ -10,8 +10,7 @@ import {
   CheckCircle,
   Globe,
   Heart,
-  Star,
-  Info
+  Star
 } from "lucide-react";
 
 export function AboutPage() {
