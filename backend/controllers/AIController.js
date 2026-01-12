@@ -1,11 +1,20 @@
 const OpenAI = require('openai');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Inicializar OpenAI solo si hay API key
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 exports.recommendDestinations = async (req, res) => {
   try {
+    // Verificar si OpenAI está disponible
+    if (!openai) {
+      return res.status(503).json({ 
+        success: false,
+        error: 'AI recommendations are not available at the moment. Please configure OPENAI_API_KEY.' 
+      });
+    }
+
     const preferences = req.body;
     
     const prompt = `Eres un asesor experto en viajes personalizados. Tu tarea es recomendar varios destinos de viaje ideales según los datos proporcionados.
@@ -133,9 +142,17 @@ Formato de la respuesta:
 
 exports.generateItinerayWithAI = async (req, res) => {
   try {
+    // Verificar si OpenAI está disponible
+    if (!openai) {
+      return res.status(503).json({ 
+        success: false,
+        error: 'AI itinerary generation is not available at the moment. Please configure OPENAI_API_KEY.' 
+      });
+    }
+
     const { destination, startDate, endDate } = req.body;
     
-    const prompt = `Actúas como un planificador de viajes profesional especializado en crear itinerarios turísticos inteligentes y realistas. Tu tarea es generar un itinerio diario en formato JSON, adaptado al destino y a las fechas proporcionadas.
+    const prompt = `Actúas como un planificador de viajes profesional especializado en crear itinerarios turísticos inteligentes y realistas. Tu tarea es generar un itinerario diario en formato JSON, adaptado al destino y a las fechas proporcionadas.
 
 Contexto: El usuario te proporcionará:
 
@@ -176,7 +193,7 @@ Una lista JSON con todas las actividades del viaje. Ejemplo:
     "description": "Recorrido guiado por el Palacio Real. Cerrado los martes.",
     "startdate": "2025-06-15T10:00",
     "enddate": "2025-06-15T12:00",
-    "location": "Dirección o lugar de la actividad (opcional)",
+    "location": "Dirección o lugar de la actividad (opcional)"
   }
 ]`;
 
